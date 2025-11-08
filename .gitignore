@@ -38,6 +38,7 @@ yarn-error.log*
 
 # tanstack router
 .tanstack
+.env
 
 # typescript
 *.tsbuildinfo
