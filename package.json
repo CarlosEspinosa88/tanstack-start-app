@@ -7,8 +7,10 @@
     "dev": "vite dev",
     "build": "vite build",
     "preview": "vite preview",
+    "audit": "npm audit fix",
     "prisma:generate": "prisma generate",
-    "prisma:migrate": "prisma migrate dev"
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:seed": "tsx prisma/seed.ts"
   },
   "keywords": [],
   "author": "",
@@ -18,15 +20,20 @@
     "@prisma/client": "^6.19.0",
     "@tanstack/react-router": "^1.134.13",
     "@tanstack/react-start": "^1.134.13",
-    "prisma": "^6.19.0",
+    "cookie": "^1.0.2",
+    "dotenv": "^17.2.3",
     "react": "^19.2.0",
-    "react-dom": "^19.2.0"
+    "react-dom": "^19.2.0",
+    "zod": "^4.1.12"
   },
   "devDependencies": {
+    "@types/cookie": "^0.6.0",
     "@types/node": "^24.10.0",
     "@types/react": "^19.2.2",
     "@types/react-dom": "^19.2.2",
     "@vitejs/plugin-react": "^5.1.0",
+    "tsx": "^4.20.6",
+    "prisma": "^6.19.0",
     "typescript": "^5.9.3",
     "vite": "^7.2.1",
     "vite-tsconfig-paths": "^5.1.4"

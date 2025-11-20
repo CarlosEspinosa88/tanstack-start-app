@@ -7,8 +7,20 @@ import {
   HeadContent,
   Scripts,
 } from '@tanstack/react-router'
+import type { SessionUser } from '../server/auth'
+
+export type RouterContext = {
+  user: SessionUser | null
+}
 
 export const Route = createRootRoute({
+  beforeLoad: async ({ context, location }) => {
+    // console.log("CONTEXT", context)
+  // En Start, el request del server está disponible en SSR; para client, el user
+  // vendrá hidratado si lo incluyes en el HTML, o puedes pedirlo con server fn.
+  // Para simplificar, dejamos `user` como venía en `context` del server.
+    return { ...context }
+  },
   head: () => ({
     meta: [
       {
