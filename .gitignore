@@ -10,12 +10,16 @@
 !.yarn/releases
 !.yarn/versions
 
+package-lock.json
+
 # testing
 /coverage
 
 # next.js
 /.next/
 /out/
+.cache
+.vercel
 
 # production
 /build

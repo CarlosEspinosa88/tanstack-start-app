@@ -1,5 +1,5 @@
 import { parse, serialize } from 'cookie'
-import { createMiddleware } from '@tanstack/react-start'
+import { createMiddleware, createServerFn } from '@tanstack/react-start'
 import { prisma } from './db'
 
 export type SessionUser = { 
@@ -52,3 +52,9 @@ export const authMiddleware = createMiddleware().server(async ({ next, request }
   const user = await getUserFromRequest(request)
   return next({ context: { user }})
 })
+
+export const fetchUser = createServerFn({ method: 'GET' })
+  .middleware([authMiddleware])
+  .handler(async ({ context }) => {
+    return context.user
+  })

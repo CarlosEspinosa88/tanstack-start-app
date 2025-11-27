@@ -65,29 +65,30 @@ export const Route = createFileRoute('/')({
   },
 })
 
+import { Route as rootRoute } from './__root'
+
 function Home() {
   // const router = useRouter()
   const todos = Route.useLoaderData()
+  const { user } = rootRoute.useRouteContext()
 
-  console.log("Check", { todos } )
+  console.log("Check", { todos, user } )
   return (
-    // <button
-    //   type="button"
-    //   onClick={() => {
-    //     updateCount({ data: 1 }).then(() => {
-    //       router.invalidate()
-    //     })
-    //   }}
-    // >
-    //   Add 1 to {state}?
-    // </button>
-    <div>
-      {todos.map((item, index) => (
-        <div key={item.id}>
+    <div className="p-4">
+      <div className="mb-4">
+        {user ? (
+          <p className="text-green-600 font-bold">Welcome back, {user.email}!</p>
+        ) : (
+          <p className="text-gray-600">You are not logged in. <a href="/login" className="text-blue-500 underline">Login here</a></p>
+        )}
+      </div>
+
+      <h2 className="text-xl font-bold mb-2">Todos</h2>
+      {todos?.map((item, index) => (
+        <div key={item.id} className="border p-2 mb-2 rounded">
           <p>{item.title}</p>
         </div>
       ))}
-      Hola
     </div>
   )
 }

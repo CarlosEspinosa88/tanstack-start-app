@@ -7,6 +7,9 @@ import { DefaultCatchBoundary } from './components/DefaultCatchBoundary'
 export function getRouter() {
   const router = createRouter({
     routeTree,
+    context: {
+      user: null
+    },
     defaultPreload: 'intent',
     defaultErrorComponent: DefaultCatchBoundary,
     defaultNotFoundComponent: () => <NotFound />,
