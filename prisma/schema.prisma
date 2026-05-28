@@ -23,8 +23,11 @@ model User {
   id String @id @default(cuid())
   email String @unique
   name String?
+  picture String?
+  googleId String @unique
   role String @default("user") // 'user' | 'admin'
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
   todos Todo[]
 }
 

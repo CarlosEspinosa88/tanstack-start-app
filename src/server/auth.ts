@@ -1,54 +1,87 @@
-import { parse, serialize } from 'cookie'
-import { createMiddleware } from '@tanstack/react-start'
-import { prisma } from './db'
+import { OAuth2Client } from 'google-auth-library';
+import jwt from 'jsonwebtoken';
+import { prisma } from './db';
 
-export type SessionUser = { 
-  id: string; 
-  email: string;
-  role: string;
-  name?: string | null
+const client = new OAuth2Client(
+  process.env.GOOGLE_CLIENT_ID,
+  process.env.GOOGLE_CLIENT_SECRET,
+  process.env.GOOGLE_REDIRECT_URI
+);
+
+export function getGoogleAuthUrl() {
+  const scopes = [
+    'https://www.googleapis.com/auth/userinfo.email',
+    'https://www.googleapis.com/auth/userinfo.profile',
+  ];
+
+  return client.generateAuthUrl({
+    access_type: 'offline',
+    scope: scopes,
+  });
 }
 
-const COOKIE_NAME = 'auth'
-
-export function getUserFromRequest(req: Request): Promise<SessionUser | null> {
-  const header = req.headers.get('cookie') ?? ''
-  const cookies = parse(header)
-  const token = cookies[COOKIE_NAME]
-  console.log("TOKEN", token)
-  
-  if (!token) return Promise.resolve(null)
-  
-  // para demo, el token es el email; en prod usa JWT/opaque tokens
-  return prisma.user.findUnique({ where: { email: token } })
-    .then((u) => u
-      ? { 
-          id: u.id, 
-          email: u.email, 
-          role: u.role, 
-          name: u.name
-        }
-      : null,
-  )
-}
-
-export function setLoginCookie(email: string) {
-  return serialize(COOKIE_NAME, email, {
-    path: '/',
-    httpOnly: true,
-    sameSite: 'lax',
-    // secure: true, // habilitar en prod https
-    maxAge: 60 * 60 * 24 * 7,
+export async function handleGoogleCallback(code: string) {
+  try {
+    const { tokens } = await client.getToken(code);
+    
+    if (!tokens.id_token) {
+      throw new Error('No ID token received');
     }
-  )
+
+    // Verify the ID token
+    const ticket = await client.verifyIdToken({
+      idToken: tokens.id_token,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+
+    const payload = ticket.getPayload();
+    
+    if (!payload || !payload.email) {
+      throw new Error('No email in token payload');
+    }
+
+    // Create or update user in database
+    const user = await prisma.user.upsert({
+      where: { email: payload.email },
+      update: {
+        name: payload.name,
+        picture: payload.picture,
+        googleId: payload.sub,
+      },
+      create: {
+        email: payload.email,
+        name: payload.name,
+        picture: payload.picture,
+        googleId: payload.sub,
+      },
+    });
+
+    // Generate JWT token
+    const jwtToken = jwt.sign(
+      {
+        userId: user.id,
+        email: user.email,
+      },
+      process.env.JWT_SECRET!,
+      { expiresIn: '7d' }
+    );
+
+    return {
+      user,
+      token: jwtToken,
+    };
+  } catch (error) {
+    console.error('Error handling Google callback:', error);
+    throw error;
+  }
 }
 
-
-export function clearLoginCookie() {
-return serialize(COOKIE_NAME, '', { path: '/', maxAge: 0 })
+export function verifyJWT(token: string) {
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET!);
+    return decoded as { userId: string; email: string };
+  } catch (error) {
+    console.error('Error verifying JWT:', error);
+    return null;
+  }
 }
-
-export const authMiddleware = createMiddleware().server(async ({ next, request }) => {
-  const user = await getUserFromRequest(request)
-  return next({ context: { user }})
-})
