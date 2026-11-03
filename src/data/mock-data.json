@@ -1,0 +1,97 @@
+{
+  "users": [
+    {
+      "id": "demo-user",
+      "email": "demo@todo.dev",
+      "name": "Demo User",
+      "googleId": "mock-google-demo-user",
+      "role": "user"
+    }
+  ],
+  "todos": [
+    {
+      "id": "demo-todo-01",
+      "title": "Draft the product update",
+      "done": false,
+      "createdAt": "2026-11-03T10:03:43Z",
+      "userId": "demo-user"
+    },
+    {
+      "id": "demo-todo-02",
+      "title": "Review the release checklist",
+      "done": true,
+      "createdAt": "2026-11-03T10:03:43Z",
+      "userId": "demo-user"
+    },
+    {
+      "id": "demo-todo-03",
+      "title": "Fix the account settings form",
+      "done": false,
+      "createdAt": "2026-11-02T10:03:43Z",
+      "userId": "demo-user"
+    },
+    {
+      "id": "demo-todo-04",
+      "title": "Read through user feedback",
+      "done": true,
+      "createdAt": "2026-11-02T10:03:43Z",
+      "userId": "demo-user"
+    },
+    {
+      "id": "demo-todo-05",
+      "title": "Plan the next sprint",
+      "done": false,
+      "createdAt": "2026-11-01T10:03:43Z",
+      "userId": "demo-user"
+    },
+    {
+      "id": "demo-todo-06",
+      "title": "Update onboarding copy",
+      "done": false,
+      "createdAt": "2026-11-01T10:03:43Z",
+      "userId": "demo-user"
+    },
+    {
+      "id": "demo-todo-07",
+      "title": "Audit stale dependencies",
+      "done": true,
+      "createdAt": "2026-10-31T10:03:43Z",
+      "userId": "demo-user"
+    },
+    {
+      "id": "demo-todo-08",
+      "title": "Share weekly progress",
+      "done": true,
+      "createdAt": "2026-10-31T10:03:43Z",
+      "userId": "demo-user"
+    },
+    {
+      "id": "demo-todo-09",
+      "title": "Add keyboard shortcuts",
+      "done": false,
+      "createdAt": "2026-10-30T10:03:43Z",
+      "userId": "demo-user"
+    },
+    {
+      "id": "demo-todo-10",
+      "title": "Prepare the demo workspace",
+      "done": false,
+      "createdAt": "2026-10-29T10:03:43Z",
+      "userId": "demo-user"
+    },
+    {
+      "id": "demo-todo-11",
+      "title": "Verify the mobile layout",
+      "done": false,
+      "createdAt": "2026-10-29T10:03:43Z",
+      "userId": "demo-user"
+    },
+    {
+      "id": "demo-todo-12",
+      "title": "Document API changes",
+      "done": false,
+      "createdAt": "2026-10-28T10:03:43Z",
+      "userId": "demo-user"
+    }
+  ]
+}
