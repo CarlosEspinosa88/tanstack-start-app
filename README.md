@@ -2,6 +2,8 @@
 
 A full-stack todo application built with TanStack Start, React, TypeScript, Prisma, and SQLite. The home page is a sample dashboard with task totals, completion progress, a seven-day creation chart, and an interactive task list. Its reproducible demo fixture is generated with DuckDB and can also be loaded into the SQLite database through Prisma.
 
+The sample activity chart uses the newest todo in the fixture as the end of its seven-day window, so the checked-in demo remains useful between fixture regenerations.
+
 ## Requirements
 
 - Node.js 22.12 or newer (or Node.js 20.19 or newer)
