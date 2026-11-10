@@ -23,7 +23,15 @@ const client = new OAuth2Client(
   process.env.GOOGLE_REDIRECT_URI,
 )
 
-const JWT_SECRET = process.env.JWT_SECRET ?? 'development-secret'
+function getJwtSecret(): string {
+  const secret = process.env.JWT_SECRET
+
+  if (!secret) {
+    throw new Error('JWT_SECRET must be configured to sign authentication tokens')
+  }
+
+  return secret
+}
 
 export function getGoogleAuthUrl() {
   const scopes = [
@@ -39,6 +47,7 @@ export function getGoogleAuthUrl() {
 
 export async function handleGoogleCallback(code: string) {
   try {
+    const jwtSecret = getJwtSecret()
     const { tokens } = await client.getToken(code)
 
     if (!tokens.id_token) {
@@ -76,7 +85,7 @@ export async function handleGoogleCallback(code: string) {
         userId: user.id,
         email: user.email,
       },
-      JWT_SECRET,
+      jwtSecret,
       { expiresIn: '7d' },
     )
 
@@ -91,8 +100,14 @@ export async function handleGoogleCallback(code: string) {
 }
 
 export function verifyJWT(token: string): JWTClaims | null {
+  const secret = process.env.JWT_SECRET
+
+  if (!secret) {
+    return null
+  }
+
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as JWTClaims
+    const decoded = jwt.verify(token, secret) as JWTClaims
     return decoded
   } catch (error) {
     console.error('Error verifying JWT:', error)
