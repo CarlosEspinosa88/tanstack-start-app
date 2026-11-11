@@ -1,6 +1,7 @@
 import { createMiddleware } from '@tanstack/react-start'
 import { OAuth2Client } from 'google-auth-library'
 import jwt from 'jsonwebtoken'
+import { parse } from 'cookie'
 import { prisma } from './db'
 
 export type SessionUser = {
@@ -33,15 +34,11 @@ function getJwtSecret(): string {
   return secret
 }
 
-export function getGoogleAuthUrl() {
-  const scopes = [
-    'https://www.googleapis.com/auth/userinfo.email',
-    'https://www.googleapis.com/auth/userinfo.profile',
-  ]
-
+export function getGoogleAuthUrl(state: string) {
   return client.generateAuthUrl({
     access_type: 'offline',
-    scope: scopes,
+    scope: ['openid', 'email', 'profile'],
+    state,
   })
 }
 
@@ -117,9 +114,11 @@ export function verifyJWT(token: string): JWTClaims | null {
 
 export async function getUserFromRequest(request: Request): Promise<SessionUser | null> {
   const authorizationHeader = request.headers.get('authorization')
-  const token = authorizationHeader?.startsWith('Bearer ')
+  const bearerToken = authorizationHeader?.startsWith('Bearer ')
     ? authorizationHeader.slice(7)
     : null
+  const cookieToken = parse(request.headers.get('cookie') ?? '').session
+  const token = bearerToken ?? cookieToken
 
   if (!token) {
     return null
