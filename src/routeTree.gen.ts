@@ -15,6 +15,7 @@ import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as PostsIndexRouteImport } from './routes/posts/index'
 import { Route as PostsPostIdRouteImport } from './routes/posts/$postId'
+import { Route as AuthLogoutRouteImport } from './routes/auth.logout'
 import { Route as AuthGoogleRouteImport } from './routes/auth.google'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 
@@ -48,6 +49,11 @@ const PostsPostIdRoute = PostsPostIdRouteImport.update({
   path: '/posts/$postId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthLogoutRoute = AuthLogoutRouteImport.update({
+  id: '/auth/logout',
+  path: '/auth/logout',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthGoogleRoute = AuthGoogleRouteImport.update({
   id: '/auth/google',
   path: '/auth/google',
@@ -66,6 +72,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/google': typeof AuthGoogleRoute
+  '/auth/logout': typeof AuthLogoutRoute
   '/posts/$postId': typeof PostsPostIdRoute
   '/posts': typeof PostsIndexRoute
 }
@@ -76,6 +83,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/google': typeof AuthGoogleRoute
+  '/auth/logout': typeof AuthLogoutRoute
   '/posts/$postId': typeof PostsPostIdRoute
   '/posts': typeof PostsIndexRoute
 }
@@ -87,6 +95,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/google': typeof AuthGoogleRoute
+  '/auth/logout': typeof AuthLogoutRoute
   '/posts/$postId': typeof PostsPostIdRoute
   '/posts/': typeof PostsIndexRoute
 }
@@ -99,6 +108,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/auth/callback'
     | '/auth/google'
+    | '/auth/logout'
     | '/posts/$postId'
     | '/posts'
   fileRoutesByTo: FileRoutesByTo
@@ -109,6 +119,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/auth/callback'
     | '/auth/google'
+    | '/auth/logout'
     | '/posts/$postId'
     | '/posts'
   id:
@@ -119,6 +130,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/auth/callback'
     | '/auth/google'
+    | '/auth/logout'
     | '/posts/$postId'
     | '/posts/'
   fileRoutesById: FileRoutesById
@@ -130,6 +142,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
   AuthGoogleRoute: typeof AuthGoogleRoute
+  AuthLogoutRoute: typeof AuthLogoutRoute
   PostsPostIdRoute: typeof PostsPostIdRoute
   PostsIndexRoute: typeof PostsIndexRoute
 }
@@ -178,6 +191,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PostsPostIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/auth/logout': {
+      id: '/auth/logout'
+      path: '/auth/logout'
+      fullPath: '/auth/logout'
+      preLoaderRoute: typeof AuthLogoutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth/google': {
       id: '/auth/google'
       path: '/auth/google'
@@ -202,6 +222,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   AuthCallbackRoute: AuthCallbackRoute,
   AuthGoogleRoute: AuthGoogleRoute,
+  AuthLogoutRoute: AuthLogoutRoute,
   PostsPostIdRoute: PostsPostIdRoute,
   PostsIndexRoute: PostsIndexRoute,
 }

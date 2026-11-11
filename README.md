@@ -1,8 +1,8 @@
 # Todo dashboard
 
-A full-stack todo application built with TanStack Start, React, TypeScript, Prisma, and SQLite. The home page is a sample dashboard with task totals, completion progress, a seven-day creation chart, and an interactive task list. Its reproducible demo fixture is generated with DuckDB and can also be loaded into the SQLite database through Prisma.
+A full-stack todo application built with TanStack Start, React, TypeScript, Prisma, and SQLite. Sign in with Google to view, create, and complete todos saved to your account. The dashboard includes task totals, completion progress, a seven-day creation chart, and task search and filters. Google sign-in requires a verified email address.
 
-The sample activity chart uses the newest todo in the fixture as the end of its seven-day window, so the checked-in demo remains useful between fixture regenerations.
+The checked-in DuckDB fixture is used to seed sample users and todos into the local database; it is not shown as a shared dashboard.
 
 ## Requirements
 
@@ -17,11 +17,19 @@ npm install
 npm run dev
 ```
 
-Open the local URL printed by Vite. The dashboard reads its demo data from `src/data/mock-data.json`, so it works without configuring OAuth or connecting to the database.
+Configure Google OAuth and the database before signing in. Copy `.env.example` to `.env`, set `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI` (for local development, `http://localhost:3000/auth/callback`), and a strong `JWT_SECRET`. In Google Cloud, enable the Google identity/OpenID sign-in flow and allow the same callback URL. The app uses the configured local SQLite database.
+
+Apply migrations, generate the Prisma client, then start the app:
+
+```sh
+npm run prisma:generate
+npm run prisma:migrate
+npm run dev
+```
 
 ## Demo data and database
 
-The app's data model is intentionally small: users own todos, and each todo has a title, completion flag, and creation time. The checked-in sample fixture powers the dashboard and Prisma seed. To regenerate it with DuckDB:
+The app's data model is intentionally small: users own todos, and each todo has a title, completion flag, and creation time. The checked-in sample fixture powers the Prisma seed. To regenerate it with DuckDB:
 
 ```sh
 python3 -m venv .venv
