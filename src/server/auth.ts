@@ -58,8 +58,12 @@ export async function handleGoogleCallback(code: string) {
 
     const payload = ticket.getPayload()
 
-    if (!payload || !payload.email) {
-      throw new Error('No email in token payload')
+    if (
+      !payload?.email ||
+      payload.email_verified !== true ||
+      !payload.sub
+    ) {
+      throw new Error('Google account must have a verified email address')
     }
 
     const user = await prisma.user.upsert({

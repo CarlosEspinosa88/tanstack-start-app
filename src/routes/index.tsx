@@ -1,19 +1,31 @@
-import { createFileRoute } from '@tanstack/react-router'
-import { useState, type CSSProperties } from 'react'
-import mockData from '../data/mock-data.json'
+import { createFileRoute, redirect, useRouter } from '@tanstack/react-router'
+import { useState, type CSSProperties, type FormEvent } from 'react'
+import { createTodo, getCurrentUser, getTodos, updateTodo } from '../server/todo.server'
 
 type TodoFilter = 'all' | 'open' | 'completed'
 type ProgressStyle = CSSProperties & { '--progress': string }
 
 export const Route = createFileRoute('/')({
   component: Home,
-  loader: () => mockData.todos,
+  loader: async () => {
+    const user = await getCurrentUser()
+
+    if (!user) {
+      throw redirect({ to: '/login', search: { error: undefined } })
+    }
+
+    return { user, todos: await getTodos() }
+  },
 })
 
 function Home() {
-  const todos = Route.useLoaderData()
+  const router = useRouter()
+  const { user, todos } = Route.useLoaderData()
   const [filter, setFilter] = useState<TodoFilter>('all')
   const [search, setSearch] = useState('')
+  const [newTitle, setNewTitle] = useState('')
+  const [mutationError, setMutationError] = useState('')
+  const [isSaving, setIsSaving] = useState(false)
   const completedCount = todos.filter((todo) => todo.done).length
   const openCount = todos.length - completedCount
   const completionRate = todos.length
@@ -28,9 +40,10 @@ function Home() {
 
     return matchesFilter && todo.title.toLowerCase().includes(normalizedSearch)
   })
+  const dateKeyForTodo = (createdAt: Date) => createdAt.toISOString().slice(0, 10)
   const latestTodoDate = todos.reduce(
     (latest, todo) =>
-      todo.createdAt.slice(0, 10) > latest ? todo.createdAt.slice(0, 10) : latest,
+      dateKeyForTodo(todo.createdAt) > latest ? dateKeyForTodo(todo.createdAt) : latest,
     '',
   )
   const activityEndDate = latestTodoDate
@@ -47,11 +60,51 @@ function Home() {
         weekday: 'short',
         timeZone: 'UTC',
       }),
-      count: todos.filter((todo) => todo.createdAt.slice(0, 10) === dateKey)
+      count: todos.filter((todo) => dateKeyForTodo(todo.createdAt) === dateKey)
         .length,
     }
   })
   const maxActivity = Math.max(1, ...activity.map((day) => day.count))
+
+  async function handleCreateTodo(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    const title = newTitle.trim()
+
+    if (!title || isSaving) {
+      return
+    }
+
+    setIsSaving(true)
+    setMutationError('')
+
+    try {
+      await createTodo({ data: { title } })
+      setNewTitle('')
+      await router.invalidate()
+    } catch {
+      setMutationError('Could not save your task. Please try again.')
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  async function handleToggleTodo(id: string, done: boolean) {
+    if (isSaving) {
+      return
+    }
+
+    setIsSaving(true)
+    setMutationError('')
+
+    try {
+      await updateTodo({ data: { id, done: !done } })
+      await router.invalidate()
+    } catch {
+      setMutationError('Could not update your task. Please try again.')
+    } finally {
+      setIsSaving(false)
+    }
+  }
 
   return (
     <div className="app-shell">
@@ -72,19 +125,27 @@ function Home() {
           </a>
         </nav>
         <div className="sidebar-bottom">
-          <div className="avatar">D</div>
+          {user.picture ? (
+            <img className="avatar" src={user.picture} alt="" />
+          ) : (
+            <div className="avatar" aria-hidden="true">
+              {(user.name ?? user.email).slice(0, 1).toUpperCase()}
+            </div>
+          )}
           <div>
-            <strong>Demo User</strong>
+            <strong>{user.name ?? user.email}</strong>
             <span>Personal workspace</span>
           </div>
-          <span className="more-icon" aria-hidden="true">···</span>
+          <form action="/auth/logout" method="post">
+            <button className="sign-out-button" type="submit">Sign out</button>
+          </form>
         </div>
       </aside>
 
       <main className="main-content">
         <header className="topbar">
           <p>Workspace <span>/</span> Overview</p>
-          <div className="demo-indicator"><span /> Sample data</div>
+          <div className="demo-indicator"><span /> Your workspace</div>
         </header>
 
         <div className="dashboard-content">
@@ -218,6 +279,22 @@ function Home() {
                 />
               </label>
             </div>
+            <form className="todo-form" onSubmit={handleCreateTodo}>
+              <label className="visually-hidden" htmlFor="new-todo-title">
+                New task
+              </label>
+              <input
+                id="new-todo-title"
+                maxLength={140}
+                onChange={(event) => setNewTitle(event.currentTarget.value)}
+                placeholder="Add a task"
+                value={newTitle}
+              />
+              <button disabled={!newTitle.trim() || isSaving} type="submit">
+                {isSaving ? 'Saving…' : 'Add task'}
+              </button>
+            </form>
+            {mutationError && <p className="todo-error" role="alert">{mutationError}</p>}
             <div className="task-tabs" role="group" aria-label="Filter tasks">
               {([
                 ['all', 'All tasks'],
@@ -239,9 +316,15 @@ function Home() {
             <ul className="task-list">
               {visibleTodos.map((todo) => (
                 <li className="task-row" key={todo.id}>
-                  <span className={todo.done ? 'task-check checked' : 'task-check'}>
+                  <button
+                    aria-label={`${todo.done ? 'Mark incomplete' : 'Mark complete'}: ${todo.title}`}
+                    className={todo.done ? 'task-check checked' : 'task-check'}
+                    disabled={isSaving}
+                    onClick={() => handleToggleTodo(todo.id, todo.done)}
+                    type="button"
+                  >
                     {todo.done ? '✓' : ''}
-                  </span>
+                  </button>
                   <span className={todo.done ? 'task-title completed-title' : 'task-title'}>
                     {todo.title}
                   </span>
@@ -249,7 +332,7 @@ function Home() {
                     <i />
                     {todo.done ? 'Completed' : 'In progress'}
                   </span>
-                  <time className="task-date" dateTime={todo.createdAt}>
+                  <time className="task-date" dateTime={todo.createdAt.toISOString()}>
                     {new Date(todo.createdAt).toLocaleDateString(undefined, {
                       month: 'short',
                       day: 'numeric',
@@ -266,7 +349,7 @@ function Home() {
             </div>
           </section>
           <footer className="dashboard-footer">
-            Demo data generated with DuckDB. Regenerate with <code>npm run mock:generate</code>.
+            Your tasks are saved to your account.
           </footer>
         </div>
       </main>
