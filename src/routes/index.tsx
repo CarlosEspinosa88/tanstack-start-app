@@ -1,70 +1,91 @@
-import { createFileRoute, redirect, useRouter } from '@tanstack/react-router'
-import { useState, type CSSProperties, type FormEvent } from 'react'
-import { createTodo, getCurrentUser, getTodos, updateTodo } from '../server/todo.server'
+import { createFileRoute, redirect, useNavigate, useRouter } from '@tanstack/react-router'
+import { useEffect, useState, type CSSProperties, type FormEvent } from 'react'
+import { z } from 'zod'
+import {
+  createTodo,
+  deleteTodo,
+  getCurrentUser,
+  getTodoDashboard,
+  updateTodo,
+} from '../server/todo.server'
 
 type TodoFilter = 'all' | 'open' | 'completed'
 type ProgressStyle = CSSProperties & { '--progress': string }
 
 export const Route = createFileRoute('/')({
+  validateSearch: z.object({
+    page: z.coerce.number().int().min(1).catch(1),
+    status: z.enum(['all', 'open', 'completed']).catch('all'),
+    search: z.string().catch(''),
+  }).partial({
+    page: true,
+    status: true,
+    search: true,
+  }).transform((search) => ({
+    page: search.page ?? 1,
+    status: search.status ?? 'all',
+    search: search.search ?? '',
+  })),
+  loaderDeps: ({ search }) => search,
   component: Home,
-  loader: async () => {
+  loader: async ({ deps }) => {
     const user = await getCurrentUser()
 
     if (!user) {
       throw redirect({ to: '/login', search: { error: undefined } })
     }
 
-    return { user, todos: await getTodos() }
+    const dashboard = await getTodoDashboard({
+      data: { page: deps.page, status: deps.status, search: deps.search },
+    })
+
+    if (dashboard.pagination.page !== deps.page) {
+      throw redirect({
+        to: '/',
+        search: { ...deps, page: dashboard.pagination.page },
+      })
+    }
+
+    return { user, dashboard }
   },
 })
 
 function Home() {
   const router = useRouter()
-  const { user, todos } = Route.useLoaderData()
-  const [filter, setFilter] = useState<TodoFilter>('all')
+  const navigate = useNavigate({ from: '/' })
+  const { user, dashboard } = Route.useLoaderData()
+  const query = Route.useSearch()
+  const { todos, summary, activity, pagination } = dashboard
+  const filter = query.status as TodoFilter
   const [search, setSearch] = useState('')
   const [newTitle, setNewTitle] = useState('')
   const [mutationError, setMutationError] = useState('')
   const [isSaving, setIsSaving] = useState(false)
-  const completedCount = todos.filter((todo) => todo.done).length
-  const openCount = todos.length - completedCount
-  const completionRate = todos.length
-    ? Math.round((completedCount / todos.length) * 100)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editingTitle, setEditingTitle] = useState('')
+  const completionRate = summary.allCount
+    ? Math.round((summary.completedCount / summary.allCount) * 100)
     : 0
-  const normalizedSearch = search.trim().toLowerCase()
-  const visibleTodos = todos.filter((todo) => {
-    const matchesFilter =
-      filter === 'all' ||
-      (filter === 'open' && !todo.done) ||
-      (filter === 'completed' && todo.done)
-
-    return matchesFilter && todo.title.toLowerCase().includes(normalizedSearch)
-  })
-  const dateKeyForTodo = (createdAt: Date) => createdAt.toISOString().slice(0, 10)
-  const latestTodoDate = todos.reduce(
-    (latest, todo) =>
-      dateKeyForTodo(todo.createdAt) > latest ? dateKeyForTodo(todo.createdAt) : latest,
-    '',
-  )
-  const activityEndDate = latestTodoDate
-    ? new Date(`${latestTodoDate}T00:00:00Z`)
-    : new Date()
-  const activity = Array.from({ length: 7 }, (_, index) => {
-    const date = new Date(activityEndDate)
-    date.setUTCDate(date.getUTCDate() - (6 - index))
-    const dateKey = date.toISOString().slice(0, 10)
-
-    return {
-      dateKey,
-      label: date.toLocaleDateString(undefined, {
-        weekday: 'short',
-        timeZone: 'UTC',
-      }),
-      count: todos.filter((todo) => dateKeyForTodo(todo.createdAt) === dateKey)
-        .length,
-    }
-  })
   const maxActivity = Math.max(1, ...activity.map((day) => day.count))
+
+  useEffect(() => {
+    setSearch(query.search)
+  }, [query.search])
+
+  function navigateToTasks(next: Partial<typeof query>) {
+    return navigate({
+      search: (previous) => ({
+        ...previous,
+        ...next,
+        page: next.page ?? 1,
+      }),
+    })
+  }
+
+  function handleSearch(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    void navigateToTasks({ search: search.trim() })
+  }
 
   async function handleCreateTodo(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -101,6 +122,45 @@ function Home() {
       await router.invalidate()
     } catch {
       setMutationError('Could not update your task. Please try again.')
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  async function handleSaveEdit(id: string) {
+    const title = editingTitle.trim()
+
+    if (!title || isSaving) {
+      return
+    }
+
+    setIsSaving(true)
+    setMutationError('')
+
+    try {
+      await updateTodo({ data: { id, title } })
+      setEditingId(null)
+      await router.invalidate()
+    } catch {
+      setMutationError('Could not update your task. Please try again.')
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  async function handleDeleteTodo(id: string, title: string) {
+    if (isSaving || !window.confirm(`Delete "${title}"? This cannot be undone.`)) {
+      return
+    }
+
+    setIsSaving(true)
+    setMutationError('')
+
+    try {
+      await deleteTodo({ data: { id } })
+      await router.invalidate()
+    } catch {
+      setMutationError('Could not delete your task. Please try again.')
     } finally {
       setIsSaving(false)
     }
@@ -169,7 +229,7 @@ function Home() {
                 <span>Total tasks</span>
                 <span className="metric-icon purple" aria-hidden="true">☷</span>
               </div>
-              <strong className="metric-value">{todos.length}</strong>
+              <strong className="metric-value">{summary.allCount}</strong>
               <span className="metric-caption">In your workspace</span>
             </article>
             <article className="metric-card">
@@ -177,7 +237,7 @@ function Home() {
                 <span>In progress</span>
                 <span className="metric-icon orange" aria-hidden="true">◷</span>
               </div>
-              <strong className="metric-value">{openCount}</strong>
+              <strong className="metric-value">{summary.openCount}</strong>
               <span className="metric-caption">Ready when you are</span>
             </article>
             <article className="metric-card">
@@ -185,7 +245,7 @@ function Home() {
                 <span>Completed</span>
                 <span className="metric-icon green" aria-hidden="true">✓</span>
               </div>
-              <strong className="metric-value">{completedCount}</strong>
+              <strong className="metric-value">{summary.completedCount}</strong>
               <span className="metric-caption">Tasks checked off</span>
             </article>
             <article className="metric-card progress-card">
@@ -251,7 +311,7 @@ function Home() {
                   </div>
                 </div>
                 <p>
-                  <strong>{completedCount} of {todos.length}</strong>
+                  <strong>{summary.completedCount} of {summary.allCount}</strong>
                   <span>tasks completed</span>
                 </p>
               </div>
@@ -268,16 +328,18 @@ function Home() {
                 <h2>Your tasks</h2>
                 <p>Stay focused on what matters next.</p>
               </div>
-              <label className="search-box">
+              <form className="search-box" onSubmit={handleSearch}>
                 <span aria-hidden="true">⌕</span>
                 <input
                   type="search"
+                  maxLength={140}
                   placeholder="Search tasks"
                   value={search}
                   onChange={(event) => setSearch(event.currentTarget.value)}
                   aria-label="Search tasks"
                 />
-              </label>
+                <button type="submit" className="search-submit">Search</button>
+              </form>
             </div>
             <form className="todo-form" onSubmit={handleCreateTodo}>
               <label className="visually-hidden" htmlFor="new-todo-title">
@@ -297,24 +359,23 @@ function Home() {
             {mutationError && <p className="todo-error" role="alert">{mutationError}</p>}
             <div className="task-tabs" role="group" aria-label="Filter tasks">
               {([
-                ['all', 'All tasks'],
-                ['open', 'In progress'],
-                ['completed', 'Completed'],
+                  ['all', `All tasks (${summary.allCount})`],
+                  ['open', `In progress (${summary.openCount})`],
+                  ['completed', `Completed (${summary.completedCount})`],
               ] as const).map(([value, label]) => (
                 <button
                   className={filter === value ? 'task-tab selected' : 'task-tab'}
                   key={value}
-                  onClick={() => setFilter(value)}
+                  onClick={() => void navigateToTasks({ status: value })}
                   type="button"
                   aria-pressed={filter === value}
                 >
                   {label}
-                  {value === 'all' && <span>{todos.length}</span>}
                 </button>
               ))}
             </div>
             <ul className="task-list">
-              {visibleTodos.map((todo) => (
+              {todos.map((todo) => (
                 <li className="task-row" key={todo.id}>
                   <button
                     aria-label={`${todo.done ? 'Mark incomplete' : 'Mark complete'}: ${todo.title}`}
@@ -325,9 +386,19 @@ function Home() {
                   >
                     {todo.done ? '✓' : ''}
                   </button>
-                  <span className={todo.done ? 'task-title completed-title' : 'task-title'}>
-                    {todo.title}
-                  </span>
+                  {editingId === todo.id ? (
+                    <input
+                      className="task-edit-input"
+                      aria-label={`Edit task: ${todo.title}`}
+                      maxLength={140}
+                      value={editingTitle}
+                      onChange={(event) => setEditingTitle(event.currentTarget.value)}
+                    />
+                  ) : (
+                    <span className={todo.done ? 'task-title completed-title' : 'task-title'}>
+                      {todo.title}
+                    </span>
+                  )}
                   <span className={todo.done ? 'status-pill completed-status' : 'status-pill open-status'}>
                     <i />
                     {todo.done ? 'Completed' : 'In progress'}
@@ -338,14 +409,61 @@ function Home() {
                       day: 'numeric',
                     })}
                   </time>
+                  {editingId === todo.id ? (
+                    <span className="task-actions">
+                      <button
+                        disabled={!editingTitle.trim() || isSaving}
+                        onClick={() => void handleSaveEdit(todo.id)}
+                        type="button"
+                      >Save</button>
+                      <button
+                        disabled={isSaving}
+                        onClick={() => setEditingId(null)}
+                        type="button"
+                      >Cancel</button>
+                    </span>
+                  ) : (
+                    <span className="task-actions">
+                      <button
+                        disabled={isSaving}
+                        onClick={() => {
+                          setEditingId(todo.id)
+                          setEditingTitle(todo.title)
+                        }}
+                        type="button"
+                      >Edit</button>
+                      <button
+                        disabled={isSaving}
+                        onClick={() => void handleDeleteTodo(todo.id, todo.title)}
+                        type="button"
+                      >Delete</button>
+                    </span>
+                  )}
                 </li>
               ))}
-              {visibleTodos.length === 0 && (
+              {todos.length === 0 && (
                 <li className="empty-state">No tasks match this view.</li>
               )}
             </ul>
             <div className="tasks-footer">
-              Showing {visibleTodos.length} of {todos.length} tasks
+              <span>
+                Showing {todos.length ? (pagination.page - 1) * pagination.pageSize + 1 : 0}
+                –{Math.min(pagination.page * pagination.pageSize, pagination.total)}
+                {' '}of {pagination.total} tasks
+              </span>
+              <span className="pagination-controls">
+                <button
+                  disabled={pagination.page <= 1}
+                  onClick={() => void navigateToTasks({ page: pagination.page - 1 })}
+                  type="button"
+                >Previous</button>
+                <span>Page {pagination.page} of {pagination.pageCount}</span>
+                <button
+                  disabled={pagination.page >= pagination.pageCount}
+                  onClick={() => void navigateToTasks({ page: pagination.page + 1 })}
+                  type="button"
+                >Next</button>
+              </span>
             </div>
           </section>
           <footer className="dashboard-footer">
