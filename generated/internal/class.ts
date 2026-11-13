@@ -23,7 +23,7 @@ const config: runtime.GetPrismaClientConfig = {
       "value": "prisma-client"
     },
     "output": {
-      "value": "/Users/carlinhos/Desarrollo/tanstack-start-app/generated",
+      "value": "/Users/carlinhos/Desarrollo/copilot-worktrees/tanstack-start-app/carlosespinosa88-redesigned-doodle/generated",
       "fromEnvVar": null
     },
     "config": {
@@ -37,7 +37,7 @@ const config: runtime.GetPrismaClientConfig = {
       }
     ],
     "previewFeatures": [],
-    "sourceFilePath": "/Users/carlinhos/Desarrollo/tanstack-start-app/prisma/schema.prisma",
+    "sourceFilePath": "/Users/carlinhos/Desarrollo/copilot-worktrees/tanstack-start-app/carlosespinosa88-redesigned-doodle/prisma/schema.prisma",
     "isCustomOutput": true
   },
   "relativePath": "../prisma",
@@ -47,7 +47,7 @@ const config: runtime.GetPrismaClientConfig = {
     "db"
   ],
   "activeProvider": "sqlite",
-  "postinstall": true,
+  "postinstall": false,
   "inlineDatasources": {
     "db": {
       "url": {
@@ -56,8 +56,8 @@ const config: runtime.GetPrismaClientConfig = {
       }
     }
   },
-  "inlineSchema": "// This is your Prisma schema file,\n// learn more about it in the docs: https://pris.ly/d/prisma-schema\n\n// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?\n// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init\n\ngenerator client {\n  provider = \"prisma-client\"\n  output   = \"../generated\"\n}\n\n// datasource db {\n//   provider = \"postgresql\"\n//   url      = env(\"DATABASE_URL\")\n// }\n\ndatasource db {\n  provider = \"sqlite\"\n  url      = \"file:./dev.db\"\n}\n\nmodel User {\n  id        String   @id @default(cuid())\n  email     String   @unique\n  name      String?\n  picture   String?\n  googleId  String   @unique\n  role      String   @default(\"user\") // 'user' | 'admin'\n  createdAt DateTime @default(now())\n  updatedAt DateTime @updatedAt\n  todos     Todo[]\n}\n\nmodel Todo {\n  id        String   @id @default(cuid())\n  title     String\n  done      Boolean  @default(false)\n  createdAt DateTime @default(now())\n  user      User     @relation(fields: [userId], references: [id])\n  userId    String\n}\n",
-  "inlineSchemaHash": "5a443672d06fb50a9bc177488279b697bd62a6e5c99fc2432e4cf63637534a1f",
+  "inlineSchema": "// This is your Prisma schema file,\n// learn more about it in the docs: https://pris.ly/d/prisma-schema\n\n// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?\n// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init\n\ngenerator client {\n  provider = \"prisma-client\"\n  output   = \"../generated\"\n}\n\n// datasource db {\n//   provider = \"postgresql\"\n//   url      = env(\"DATABASE_URL\")\n// }\n\ndatasource db {\n  provider = \"sqlite\"\n  url      = \"file:./dev.db\"\n}\n\nmodel User {\n  id        String   @id @default(cuid())\n  email     String   @unique\n  name      String?\n  picture   String?\n  googleId  String   @unique\n  role      String   @default(\"user\") // 'user' | 'admin'\n  createdAt DateTime @default(now())\n  updatedAt DateTime @updatedAt\n  todos     Todo[]\n}\n\nmodel Todo {\n  id        String   @id @default(cuid())\n  title     String\n  done      Boolean  @default(false)\n  createdAt DateTime @default(now())\n  user      User     @relation(fields: [userId], references: [id])\n  userId    String\n\n  @@index([userId, createdAt, id])\n}\n",
+  "inlineSchemaHash": "eab03a97f33745d0704a11701efb6a8d69cb8f36f6047541281606f8c4b55dcd",
   "copyEngine": true,
   "runtimeDataModel": {
     "models": {},

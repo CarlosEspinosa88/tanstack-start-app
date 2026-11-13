@@ -29,7 +29,7 @@ npm run dev
 
 ## Demo data and database
 
-The app's data model is intentionally small: users own todos, and each todo has a title, completion flag, and creation time. The checked-in sample fixture powers the Prisma seed. To regenerate it with DuckDB:
+The app's data model is intentionally small: users own todos, and each todo has a title, completion flag, and creation time. The dashboard searches and filters on the server and displays 20 matching tasks per page. The checked-in sample fixture powers the Prisma seed. To regenerate it with DuckDB:
 
 ```sh
 python3 -m venv .venv
@@ -55,6 +55,8 @@ The sample user is `demo@todo.dev`. Local database configuration is in `prisma.c
 | `npm run dev` | Start the Vite development server |
 | `npm run build` | Create the production build |
 | `npm run preview` | Preview the production build |
+| `npm test` | Run focused unit tests |
+| `npm run typecheck` | Check TypeScript types |
 | `npm run prisma:generate` | Generate the Prisma client |
 | `npm run prisma:migrate` | Apply development migrations |
 | `npm run prisma:seed` | Upsert the demo user and sample todos |
@@ -66,7 +68,7 @@ The sample user is `demo@todo.dev`. Local database configuration is in `prisma.c
 src/
   data/mock-data.json   DuckDB-generated dashboard and seed fixture
   routes/               TanStack file-based routes
-  server/               Server-only auth and Prisma access
+  server/               Server-only auth, todo queries, and focused tests
 prisma/
   migrations/           Database migrations
   schema.prisma         SQLite data model

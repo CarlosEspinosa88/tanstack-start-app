@@ -1,7 +1,7 @@
-import { timingSafeEqual } from 'node:crypto'
 import { createFileRoute } from '@tanstack/react-router'
 import { parse, serialize } from 'cookie'
 import { handleGoogleCallback } from '../server/auth'
+import { matchesOAuthState } from '../server/oauth-state'
 
 const clearOAuthStateCookie = serialize('oauth_state', '', {
   httpOnly: true,
@@ -29,15 +29,7 @@ export const Route = createFileRoute('/auth/callback')({
         const code = url.searchParams.get('code')
         const returnedState = url.searchParams.get('state')
         const savedState = parse(request.headers.get('cookie') ?? '').oauth_state
-        const returnedStateBuffer = Buffer.from(returnedState ?? '')
-        const savedStateBuffer = Buffer.from(savedState ?? '')
-
-        if (
-          !returnedState ||
-          !savedState ||
-          returnedStateBuffer.length !== savedStateBuffer.length ||
-          !timingSafeEqual(returnedStateBuffer, savedStateBuffer)
-        ) {
+        if (!matchesOAuthState(returnedState, savedState)) {
           return redirectToLogin('invalid_state')
         }
 

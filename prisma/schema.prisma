@@ -39,4 +39,6 @@ model Todo {
   createdAt DateTime @default(now())
   user User @relation(fields: [userId], references: [id])
   userId String
+
+  @@index([userId, createdAt, id])
 }
