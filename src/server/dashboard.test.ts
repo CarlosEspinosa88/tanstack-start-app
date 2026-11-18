@@ -1,6 +1,11 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { buildTodoActivity, getOwnedTodoWhere, getUtcActivityRange } from './dashboard'
+import {
+  buildTodoActivity,
+  getOwnedTodoWhere,
+  getUtcActivityRange,
+  summarizeTodoCounts,
+} from './dashboard'
 import { matchesOAuthState } from './oauth-state'
 import {
   CreateTodoInput,
@@ -77,6 +82,21 @@ test('owned task queries always include the authenticated user id', () => {
   assert.notDeepEqual(getOwnedTodoWhere('user-a', 'todo-1'), {
     id: 'todo-1',
     userId: 'user-b',
+  })
+})
+
+test('todo summary counts combine open and completed groups', () => {
+  assert.deepEqual(
+    summarizeTodoCounts([
+      { done: false, _count: { _all: 7 } },
+      { done: true, _count: { _all: 3 } },
+    ]),
+    { allCount: 10, openCount: 7, completedCount: 3 },
+  )
+  assert.deepEqual(summarizeTodoCounts([]), {
+    allCount: 0,
+    openCount: 0,
+    completedCount: 0,
   })
 })
 
