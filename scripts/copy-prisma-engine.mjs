@@ -1,4 +1,4 @@
-import { copyFile, mkdir, readFile } from 'node:fs/promises'
+import { copyFile, readFile } from 'node:fs/promises'
 import { existsSync } from 'node:fs'
 import { join } from 'node:path'
 
@@ -22,8 +22,13 @@ if (outputDirectories.length === 0) {
 
 await Promise.all(
   outputDirectories.map(async (directory) => {
-    const generatedOutput = join(directory, generatedDirectory)
-    await mkdir(generatedOutput, { recursive: true })
-    await copyFile(sourcePath, join(generatedOutput, engineFile))
+    const engineDirectory = join(directory, 'chunks', 'build')
+
+    if (!existsSync(engineDirectory)) {
+      throw new Error(`Could not find Nitro server chunks in ${directory}`)
+    }
+
+    await copyFile(sourcePath, join(engineDirectory, engineFile))
+    console.info(`Packaged Prisma query engine in ${engineDirectory}`)
   }),
 )
