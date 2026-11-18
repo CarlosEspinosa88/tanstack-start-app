@@ -1,6 +1,7 @@
 import { createFileRoute, redirect, useNavigate, useRouter } from '@tanstack/react-router'
 import { useEffect, useState, type CSSProperties, type FormEvent } from 'react'
 import { z } from 'zod'
+import { TaskRow } from '../components/TaskRow'
 import {
   createTodo,
   deleteTodo,
@@ -61,6 +62,7 @@ function Home() {
   const [newTitle, setNewTitle] = useState('')
   const [mutationError, setMutationError] = useState('')
   const [isSaving, setIsSaving] = useState(false)
+  const [pendingTodoIds, setPendingTodoIds] = useState<Set<string>>(new Set())
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editingTitle, setEditingTitle] = useState('')
   const completionRate = summary.allCount
@@ -110,11 +112,11 @@ function Home() {
   }
 
   async function handleToggleTodo(id: string, done: boolean) {
-    if (isSaving) {
+    if (pendingTodoIds.has(id)) {
       return
     }
 
-    setIsSaving(true)
+    setPendingTodoIds((current) => new Set(current).add(id))
     setMutationError('')
 
     try {
@@ -123,18 +125,22 @@ function Home() {
     } catch {
       setMutationError('Could not update your task. Please try again.')
     } finally {
-      setIsSaving(false)
+      setPendingTodoIds((current) => {
+        const next = new Set(current)
+        next.delete(id)
+        return next
+      })
     }
   }
 
   async function handleSaveEdit(id: string) {
     const title = editingTitle.trim()
 
-    if (!title || isSaving) {
+    if (!title || pendingTodoIds.has(id)) {
       return
     }
 
-    setIsSaving(true)
+    setPendingTodoIds((current) => new Set(current).add(id))
     setMutationError('')
 
     try {
@@ -144,16 +150,20 @@ function Home() {
     } catch {
       setMutationError('Could not update your task. Please try again.')
     } finally {
-      setIsSaving(false)
+      setPendingTodoIds((current) => {
+        const next = new Set(current)
+        next.delete(id)
+        return next
+      })
     }
   }
 
   async function handleDeleteTodo(id: string, title: string) {
-    if (isSaving || !window.confirm(`Delete "${title}"? This cannot be undone.`)) {
+    if (pendingTodoIds.has(id) || !window.confirm(`Delete "${title}"? This cannot be undone.`)) {
       return
     }
 
-    setIsSaving(true)
+    setPendingTodoIds((current) => new Set(current).add(id))
     setMutationError('')
 
     try {
@@ -162,12 +172,17 @@ function Home() {
     } catch {
       setMutationError('Could not delete your task. Please try again.')
     } finally {
-      setIsSaving(false)
+      setPendingTodoIds((current) => {
+        const next = new Set(current)
+        next.delete(id)
+        return next
+      })
     }
   }
 
   return (
     <div className="app-shell">
+      <a className="skip-link" href="#tasks">Skip to tasks</a>
       <aside className="sidebar">
         <a className="brand" href="#overview" aria-label="Daymark home">
           <span className="brand-mark">d</span>
@@ -183,6 +198,9 @@ function Home() {
             <span className="nav-icon" aria-hidden="true">☷</span>
             My tasks
           </a>
+          <form className="mobile-sign-out" action="/auth/logout" method="post">
+            <button type="submit">Sign out</button>
+          </form>
         </nav>
         <div className="sidebar-bottom">
           {user.picture ? (
@@ -376,70 +394,22 @@ function Home() {
             </div>
             <ul className="task-list">
               {todos.map((todo) => (
-                <li className="task-row" key={todo.id}>
-                  <button
-                    aria-label={`${todo.done ? 'Mark incomplete' : 'Mark complete'}: ${todo.title}`}
-                    className={todo.done ? 'task-check checked' : 'task-check'}
-                    disabled={isSaving}
-                    onClick={() => handleToggleTodo(todo.id, todo.done)}
-                    type="button"
-                  >
-                    {todo.done ? '✓' : ''}
-                  </button>
-                  {editingId === todo.id ? (
-                    <input
-                      className="task-edit-input"
-                      aria-label={`Edit task: ${todo.title}`}
-                      maxLength={140}
-                      value={editingTitle}
-                      onChange={(event) => setEditingTitle(event.currentTarget.value)}
-                    />
-                  ) : (
-                    <span className={todo.done ? 'task-title completed-title' : 'task-title'}>
-                      {todo.title}
-                    </span>
-                  )}
-                  <span className={todo.done ? 'status-pill completed-status' : 'status-pill open-status'}>
-                    <i />
-                    {todo.done ? 'Completed' : 'In progress'}
-                  </span>
-                  <time className="task-date" dateTime={todo.createdAt.toISOString()}>
-                    {new Date(todo.createdAt).toLocaleDateString(undefined, {
-                      month: 'short',
-                      day: 'numeric',
-                    })}
-                  </time>
-                  {editingId === todo.id ? (
-                    <span className="task-actions">
-                      <button
-                        disabled={!editingTitle.trim() || isSaving}
-                        onClick={() => void handleSaveEdit(todo.id)}
-                        type="button"
-                      >Save</button>
-                      <button
-                        disabled={isSaving}
-                        onClick={() => setEditingId(null)}
-                        type="button"
-                      >Cancel</button>
-                    </span>
-                  ) : (
-                    <span className="task-actions">
-                      <button
-                        disabled={isSaving}
-                        onClick={() => {
-                          setEditingId(todo.id)
-                          setEditingTitle(todo.title)
-                        }}
-                        type="button"
-                      >Edit</button>
-                      <button
-                        disabled={isSaving}
-                        onClick={() => void handleDeleteTodo(todo.id, todo.title)}
-                        type="button"
-                      >Delete</button>
-                    </span>
-                  )}
-                </li>
+                <TaskRow
+                  key={todo.id}
+                  todo={todo}
+                  isEditing={editingId === todo.id}
+                  isPending={pendingTodoIds.has(todo.id)}
+                  editTitle={editingTitle}
+                  onEditTitleChange={setEditingTitle}
+                  onStartEdit={() => {
+                    setEditingId(todo.id)
+                    setEditingTitle(todo.title)
+                  }}
+                  onCancelEdit={() => setEditingId(null)}
+                  onSaveEdit={() => void handleSaveEdit(todo.id)}
+                  onToggle={() => void handleToggleTodo(todo.id, todo.done)}
+                  onDelete={() => void handleDeleteTodo(todo.id, todo.title)}
+                />
               ))}
               {todos.length === 0 && (
                 <li className="empty-state">No tasks match this view.</li>
