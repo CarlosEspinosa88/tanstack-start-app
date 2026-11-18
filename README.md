@@ -64,7 +64,7 @@ The sample user is `demo@todo.dev`. Database configuration is read from `DATABAS
 | Command | Purpose |
 | --- | --- |
 | `npm run dev` | Start the Vite development server |
-| `npm run build` | Create the production build |
+| `npm run build` | Regenerate Prisma Client for the build platform, then package its query engine with the production build |
 | `npm run preview` | Preview the production build |
 | `npm test` | Run focused unit tests |
 | `npm run typecheck` | Check TypeScript types |
