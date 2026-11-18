@@ -14,12 +14,23 @@ The checked-in DuckDB fixture is used to seed sample users and todos into the lo
 
 ```sh
 npm install
-npm run dev
 ```
 
-Configure Google OAuth and the database before signing in. Copy `.env.example` to `.env`, set `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI` (for local development, `http://localhost:3000/auth/callback`), and a strong `JWT_SECRET`. In Google Cloud, enable the Google identity/OpenID sign-in flow and allow the same callback URL. The app uses the configured PostgreSQL database.
+Start a local PostgreSQL database with Docker (replace `YOUR_LOCAL_PASSWORD` with a password of your choice):
 
-Apply migrations, generate the Prisma client, then start the app:
+```sh
+docker run --name daymark-postgres --restart unless-stopped \
+  --publish 127.0.0.1:5432:5432 \
+  --env POSTGRES_USER=daymark \
+  --env POSTGRES_PASSWORD=YOUR_LOCAL_PASSWORD \
+  --env POSTGRES_DB=daymark \
+  --volume daymark-postgres-data:/var/lib/postgresql/data \
+  --detach postgres:16-alpine
+```
+
+Copy `.env.example` to `.env` and set `DATABASE_URL` to `postgresql://daymark:YOUR_LOCAL_PASSWORD@localhost:5432/daymark?schema=public`, using the same password as above. Configure Google OAuth (`GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, and `GOOGLE_REDIRECT_URI` set to `http://localhost:3000/auth/callback`) and a strong `JWT_SECRET` before signing in. In Google Cloud, allow that callback URL.
+
+Apply migrations, generate the Prisma client, then start the app. On later runs, start the existing database with `docker start daymark-postgres`:
 
 ```sh
 npm run prisma:generate
@@ -46,7 +57,7 @@ npm run prisma:migrate
 npm run prisma:seed
 ```
 
-The sample user is `demo@todo.dev`. Local database configuration is in `prisma.config.ts` and `prisma/schema.prisma`; the current setup uses `prisma/dev.db`.
+The sample user is `demo@todo.dev`. Database configuration is read from `DATABASE_URL` in `prisma.config.ts` and `prisma/schema.prisma`.
 
 ## Scripts
 
