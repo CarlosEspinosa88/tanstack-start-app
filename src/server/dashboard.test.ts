@@ -2,6 +2,8 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 import { buildTodoActivity, getOwnedTodoWhere, getUtcActivityRange } from './dashboard'
 import { matchesOAuthState } from './oauth-state'
+import jwt from 'jsonwebtoken'
+import { verifySessionToken } from './session-token'
 import {
   CreateTodoInput,
   DeleteTodoInput,
@@ -86,4 +88,29 @@ test('OAuth state comparison handles matches, mismatches, and missing values', (
   assert.equal(matchesOAuthState('short', 'longer'), false)
   assert.equal(matchesOAuthState(null, 'state-value'), false)
   assert.equal(matchesOAuthState('state-value', undefined), false)
+})
+
+test('session claims require a valid HS256 token and expected fields', () => {
+  const secret = 'integration-test-session-secret'
+  const validToken = jwt.sign(
+    { userId: 'user-a', email: 'user-a@example.com' },
+    secret,
+    { algorithm: 'HS256', expiresIn: '5m' },
+  )
+
+  assert.deepEqual(verifySessionToken(validToken, secret), {
+    userId: 'user-a',
+    email: 'user-a@example.com',
+  })
+  assert.equal(verifySessionToken(validToken, 'wrong-secret'), null)
+  assert.equal(verifySessionToken('not-a-jwt', secret), null)
+  assert.equal(
+    verifySessionToken(
+      jwt.sign({ email: 'missing-user@example.com' }, secret, {
+        algorithm: 'HS256',
+      }),
+      secret,
+    ),
+    null,
+  )
 })

@@ -1,6 +1,6 @@
 # Todo dashboard
 
-A full-stack todo application built with TanStack Start, React, TypeScript, Prisma, and SQLite. Sign in with Google to view, create, and complete todos saved to your account. The dashboard includes task totals, completion progress, a seven-day creation chart, and task search and filters. Google sign-in requires a verified email address.
+A full-stack todo application built with TanStack Start, React, TypeScript, Prisma, and PostgreSQL. Sign in with Google to view, create, and complete todos saved to your account. The dashboard includes task totals, completion progress, a seven-day creation chart, and task search and filters. Google sign-in requires a verified email address.
 
 The checked-in DuckDB fixture is used to seed sample users and todos into the local database; it is not shown as a shared dashboard.
 
@@ -17,7 +17,7 @@ npm install
 npm run dev
 ```
 
-Configure Google OAuth and the database before signing in. Copy `.env.example` to `.env`, set `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI` (for local development, `http://localhost:3000/auth/callback`), and a strong `JWT_SECRET`. In Google Cloud, enable the Google identity/OpenID sign-in flow and allow the same callback URL. The app uses the configured local SQLite database.
+Configure Google OAuth and the database before signing in. Copy `.env.example` to `.env`, set `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI` (for local development, `http://localhost:3000/auth/callback`), and a strong `JWT_SECRET`. In Google Cloud, enable the Google identity/OpenID sign-in flow and allow the same callback URL. The app uses the configured PostgreSQL database.
 
 Apply migrations, generate the Prisma client, then start the app:
 
@@ -38,7 +38,7 @@ python -m pip install -r requirements-mock.txt
 npm run mock:generate
 ```
 
-To create/update the local SQLite schema and load the fixture:
+To create/update the local PostgreSQL schema and load the fixture:
 
 ```sh
 npm run prisma:generate
@@ -59,6 +59,7 @@ The sample user is `demo@todo.dev`. Local database configuration is in `prisma.c
 | `npm run typecheck` | Check TypeScript types |
 | `npm run prisma:generate` | Generate the Prisma client |
 | `npm run prisma:migrate` | Apply development migrations |
+| `npm run prisma:deploy` | Apply migrations in deployment |
 | `npm run prisma:seed` | Upsert the demo user and sample todos |
 | `npm run mock:generate` | Run the DuckDB query and refresh the JSON fixture |
 
@@ -71,7 +72,7 @@ src/
   server/               Server-only auth, todo queries, and focused tests
 prisma/
   migrations/           Database migrations
-  schema.prisma         SQLite data model
+  schema.prisma         PostgreSQL data model
   seed.ts               Fixture-to-Prisma seeder
 scripts/
   generate_mock_data.py DuckDB fixture generator

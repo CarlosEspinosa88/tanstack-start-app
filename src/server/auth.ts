@@ -3,6 +3,7 @@ import { OAuth2Client } from 'google-auth-library'
 import jwt from 'jsonwebtoken'
 import { parse } from 'cookie'
 import { prisma } from './db'
+import { verifySessionToken, type JWTClaims } from './session-token'
 
 export type SessionUser = {
   id: string
@@ -11,11 +12,6 @@ export type SessionUser = {
   picture: string | null
   googleId: string
   role: string
-}
-
-type JWTClaims = {
-  userId: string
-  email: string
 }
 
 const client = new OAuth2Client(
@@ -107,13 +103,7 @@ export function verifyJWT(token: string): JWTClaims | null {
     return null
   }
 
-  try {
-    const decoded = jwt.verify(token, secret) as JWTClaims
-    return decoded
-  } catch (error) {
-    console.error('Error verifying JWT:', error)
-    return null
-  }
+  return verifySessionToken(token, secret)
 }
 
 export async function getUserFromRequest(request: Request): Promise<SessionUser | null> {

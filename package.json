@@ -12,6 +12,7 @@
     "audit": "npm audit fix",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
+    "prisma:deploy": "prisma migrate deploy",
     "prisma:seed": "tsx prisma/seed.ts",
     "mock:generate": "python3 scripts/generate_mock_data.py"
   },
