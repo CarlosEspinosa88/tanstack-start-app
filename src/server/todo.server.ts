@@ -3,6 +3,7 @@ import {
   buildTodoActivity,
   getOwnedTodoWhere,
   getUtcActivityRange,
+  summarizeTodoCounts,
 } from './dashboard'
 import {
   CreateTodoInput,
@@ -48,23 +49,26 @@ export const getTodoDashboard = createServerFn({ method: 'GET' })
     }
     const now = new Date()
     const activityRange = getUtcActivityRange(now)
-    const [total, allCount, openCount, completedCount, activityTodos] =
-      await Promise.all([
-        prisma.todo.count({ where }),
-        prisma.todo.count({ where: { userId: user.id } }),
-        prisma.todo.count({ where: { userId: user.id, done: false } }),
-        prisma.todo.count({ where: { userId: user.id, done: true } }),
-        prisma.todo.findMany({
-          where: {
-            userId: user.id,
-            createdAt: {
-              gte: activityRange.startDate,
-              lt: activityRange.exclusiveEndDate,
-            },
+    const [total, countGroups, activityTodos] = await Promise.all([
+      prisma.todo.count({ where }),
+      prisma.todo.groupBy({
+        by: ['done'],
+        where: { userId: user.id },
+        _count: { _all: true },
+      }),
+      prisma.todo.findMany({
+        where: {
+          userId: user.id,
+          createdAt: {
+            gte: activityRange.startDate,
+            lt: activityRange.exclusiveEndDate,
           },
-          select: { createdAt: true },
-        }),
-      ])
+        },
+        select: { createdAt: true },
+      }),
+    ])
+    const { allCount, openCount, completedCount } =
+      summarizeTodoCounts(countGroups)
     const pageCount = Math.max(1, Math.ceil(total / pageSize))
     const page = Math.min(data.page, pageCount)
     const todos = await prisma.todo.findMany({

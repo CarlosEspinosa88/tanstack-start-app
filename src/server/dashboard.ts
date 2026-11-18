@@ -51,3 +51,24 @@ export function getUtcActivityRange(today = new Date()) {
 export function getOwnedTodoWhere(userId: string, id: string) {
   return { id, userId }
 }
+
+export function summarizeTodoCounts(
+  counts: Array<{ done: boolean; _count: { _all: number } }>,
+) {
+  let openCount = 0
+  let completedCount = 0
+
+  for (const row of counts) {
+    if (row.done) {
+      completedCount = row._count._all
+    } else {
+      openCount = row._count._all
+    }
+  }
+
+  return {
+    allCount: openCount + completedCount,
+    openCount,
+    completedCount,
+  }
+}
