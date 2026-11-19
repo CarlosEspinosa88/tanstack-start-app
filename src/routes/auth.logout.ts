@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { serialize } from 'cookie'
+import { clearSessionCookie } from '../server/auth-cookies'
 
 export const Route = createFileRoute('/auth/logout')({
   server: {
@@ -9,13 +9,9 @@ export const Route = createFileRoute('/auth/logout')({
           status: 303,
           headers: {
             Location: '/login',
-            'Set-Cookie': serialize('session', '', {
-              httpOnly: true,
-              maxAge: 0,
-              path: '/',
-              sameSite: 'lax',
-              secure: process.env.NODE_ENV === 'production',
-            }),
+            'Set-Cookie': clearSessionCookie(
+              process.env.NODE_ENV === 'production',
+            ),
           },
         }),
     },

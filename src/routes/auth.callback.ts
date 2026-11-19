@@ -1,22 +1,21 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { parse, serialize } from 'cookie'
+import { parse } from 'cookie'
+import {
+  clearOAuthStateCookie,
+  serializeSessionCookie,
+} from '../server/auth-cookies'
 import { handleGoogleCallback } from '../server/auth'
 import { matchesOAuthState } from '../server/oauth-state'
 
-const clearOAuthStateCookie = serialize('oauth_state', '', {
-  httpOnly: true,
-  maxAge: 0,
-  path: '/auth/callback',
-  sameSite: 'lax',
-  secure: process.env.NODE_ENV === 'production',
-})
+const secureCookies = process.env.NODE_ENV === 'production'
+const clearedOAuthStateCookie = clearOAuthStateCookie(secureCookies)
 
 function redirectToLogin(error: string) {
   return new Response(null, {
     status: 302,
     headers: {
       Location: `/login?error=${encodeURIComponent(error)}`,
-      'Set-Cookie': clearOAuthStateCookie,
+      'Set-Cookie': clearedOAuthStateCookie,
     },
   })
 }
@@ -46,17 +45,8 @@ export const Route = createFileRoute('/auth/callback')({
           const headers = new Headers({
             Location: '/',
           })
-          headers.append('Set-Cookie', clearOAuthStateCookie)
-          headers.append(
-            'Set-Cookie',
-            serialize('session', token, {
-              httpOnly: true,
-              maxAge: 60 * 60 * 24 * 7,
-              path: '/',
-              sameSite: 'lax',
-              secure: process.env.NODE_ENV === 'production',
-            }),
-          )
+          headers.append('Set-Cookie', clearedOAuthStateCookie)
+          headers.append('Set-Cookie', serializeSessionCookie(token, secureCookies))
 
           return new Response(null, { status: 302, headers })
         } catch {
