@@ -38,5 +38,14 @@ export function createTodoRepository(prisma: PrismaClient): TodoRepository {
       const result = await prisma.todo.deleteMany({ where: { id, userId } })
       return result.count > 0
     },
+    updateManyOwned: ({ ids, userId, done }) =>
+      prisma.todo.updateMany({
+        where: { id: { in: ids }, userId },
+        data: { done },
+      }).then((result) => result.count),
+    deleteManyOwned: ({ ids, userId }) =>
+      prisma.todo.deleteMany({
+        where: { id: { in: ids }, userId },
+      }).then((result) => result.count),
   }
 }

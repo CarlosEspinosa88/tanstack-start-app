@@ -79,6 +79,43 @@ test(
       )
       assert.equal(await prisma.todo.count({ where: { id: todo.id } }), 1)
 
+      const bulkTodo = await createOwnedTodo(
+        repository,
+        firstUser.id,
+        'Bulk integration task',
+      )
+      const secondUserTodo = await createOwnedTodo(
+        repository,
+        secondUser.id,
+        'Other user bulk task',
+      )
+      assert.equal(
+        await repository.updateManyOwned({
+          ids: [bulkTodo.id, secondUserTodo.id],
+          userId: firstUser.id,
+          done: true,
+        }),
+        1,
+      )
+      assert.equal(
+        (await prisma.todo.findUniqueOrThrow({ where: { id: bulkTodo.id } })).done,
+        true,
+      )
+      assert.equal(
+        (await prisma.todo.findUniqueOrThrow({ where: { id: secondUserTodo.id } }))
+          .done,
+        false,
+      )
+      assert.equal(
+        await repository.deleteManyOwned({
+          ids: [bulkTodo.id, secondUserTodo.id],
+          userId: firstUser.id,
+        }),
+        1,
+      )
+      assert.equal(await prisma.todo.count({ where: { id: bulkTodo.id } }), 0)
+      assert.equal(await prisma.todo.count({ where: { id: secondUserTodo.id } }), 1)
+
       await deleteOwnedTodo(repository, firstUser.id, todo.id)
       assert.equal(await prisma.todo.count({ where: { id: todo.id } }), 0)
     } finally {

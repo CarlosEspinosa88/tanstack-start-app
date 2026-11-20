@@ -4,10 +4,12 @@ import {
   createOwnedTodo,
   deleteOwnedTodo,
   getTodoDashboardData,
+  deleteOwnedTodos,
   type TodoRecord,
   type TodoRepository,
   type TodoWhere,
   updateOwnedTodo,
+  updateOwnedTodos,
 } from './todo-operations'
 
 const sampleTodo: TodoRecord = {
@@ -26,6 +28,8 @@ function createRepository(overrides: Partial<TodoRepository> = {}) {
     created?: { title: string; userId: string }
     updated?: { id: string; userId: string; title?: string; done?: boolean }
     deleted?: { id: string; userId: string }
+    updatedMany?: { ids: string[]; userId: string; done: boolean }
+    deletedMany?: { ids: string[]; userId: string }
   } = { counts: [] }
 
   const repository: TodoRepository = {
@@ -52,6 +56,14 @@ function createRepository(overrides: Partial<TodoRepository> = {}) {
     deleteOwned: async (args) => {
       calls.deleted = args
       return true
+    },
+    updateManyOwned: async (args) => {
+      calls.updatedMany = args
+      return args.ids.length
+    },
+    deleteManyOwned: async (args) => {
+      calls.deletedMany = args
+      return args.ids.length
     },
     ...overrides,
   }
@@ -95,6 +107,23 @@ test('dashboard scopes search, status, counts, activity, and pagination to the u
     total: 41,
     pageCount: 3,
   })
+})
+
+test('dashboard requests the selected activity period', async () => {
+  const { repository, calls } = createRepository()
+  const dashboard = await getTodoDashboardData(
+    repository,
+    'user-a',
+    { page: 1, status: 'all', search: '', period: '30d' },
+    new Date('2026-11-19T12:00:00.000Z'),
+  )
+
+  assert.deepEqual(calls.activity, {
+    userId: 'user-a',
+    startDate: new Date('2026-10-21T00:00:00.000Z'),
+    exclusiveEndDate: new Date('2026-11-20T00:00:00.000Z'),
+  })
+  assert.equal(dashboard.activity.length, 30)
 })
 
 test('create, update, and delete always carry the authenticated owner id', async () => {
@@ -142,4 +171,21 @@ test('update and delete report missing or non-owned todos', async () => {
     userId: 'user-a',
   })
   assert.deepEqual(calls.deleted, { id: 'todo-other', userId: 'user-a' })
+})
+
+test('bulk update and delete always scope every id to the authenticated owner', async () => {
+  const { repository, calls } = createRepository()
+
+  await updateOwnedTodos(repository, 'user-a', ['todo-1', 'todo-2'], true)
+  await deleteOwnedTodos(repository, 'user-a', ['todo-3', 'todo-4'])
+
+  assert.deepEqual(calls.updatedMany, {
+    ids: ['todo-1', 'todo-2'],
+    userId: 'user-a',
+    done: true,
+  })
+  assert.deepEqual(calls.deletedMany, {
+    ids: ['todo-3', 'todo-4'],
+    userId: 'user-a',
+  })
 })
