@@ -12,6 +12,7 @@
     "typecheck": "tsc --noEmit",
     "audit": "npm audit fix",
     "prisma:generate": "prisma generate",
+    "prisma:validate": "DATABASE_URL=${DATABASE_URL:-postgresql://localhost:5432/placeholder?schema=public} prisma validate",
     "postbuild": "node scripts/copy-prisma-engine.mjs",
     "prisma:migrate": "prisma migrate dev",
     "prisma:deploy": "prisma migrate deploy",

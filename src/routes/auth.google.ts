@@ -1,6 +1,6 @@
 import { randomBytes } from 'node:crypto'
 import { createFileRoute } from '@tanstack/react-router'
-import { serialize } from 'cookie'
+import { serializeOAuthStateCookie } from '../server/auth-cookies'
 import { getGoogleAuthUrl } from '../server/auth'
 
 export const Route = createFileRoute('/auth/google')({
@@ -12,13 +12,10 @@ export const Route = createFileRoute('/auth/google')({
           status: 302,
           headers: {
             Location: getGoogleAuthUrl(state),
-            'Set-Cookie': serialize('oauth_state', state, {
-              httpOnly: true,
-              maxAge: 600,
-              path: '/auth/callback',
-              sameSite: 'lax',
-              secure: process.env.NODE_ENV === 'production',
-            }),
+            'Set-Cookie': serializeOAuthStateCookie(
+              state,
+              process.env.NODE_ENV === 'production',
+            ),
           },
         })
 

@@ -59,6 +59,12 @@ npm run prisma:seed
 
 The sample user is `demo@todo.dev`. Database configuration is read from `DATABASE_URL` in `prisma.config.ts` and `prisma/schema.prisma`.
 
+## Production release checks
+
+Configure `DATABASE_URL`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI`, and a strong `JWT_SECRET` in the deployment environment. Set the Google redirect URI to the exact HTTPS callback URL (`https://<your-domain>/auth/callback`) and register that same URL with Google. Production session and OAuth state cookies are marked `Secure`; deploy behind HTTPS.
+
+Before releasing, run `npm run prisma:deploy` against the production database, then verify the deployed app can complete Google sign-in, create/edit/complete/delete a task, and cannot access a task owned by a different account. CI validates the Prisma schema, runs CRUD and ownership integration tests against PostgreSQL, checks TypeScript, and builds the production app including the Prisma engine packaging check.
+
 ## Scripts
 
 | Command | Purpose |
@@ -69,6 +75,7 @@ The sample user is `demo@todo.dev`. Database configuration is read from `DATABAS
 | `npm test` | Run focused unit tests |
 | `npm run typecheck` | Check TypeScript types |
 | `npm run prisma:generate` | Generate the Prisma client |
+| `npm run prisma:validate` | Validate the Prisma schema |
 | `npm run prisma:migrate` | Apply development migrations |
 | `npm run prisma:deploy` | Apply migrations in deployment |
 | `npm run prisma:seed` | Upsert the demo user and sample todos |
