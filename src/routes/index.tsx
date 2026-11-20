@@ -48,7 +48,12 @@ export const Route = createFileRoute('/')({
     }
 
     const dashboard = await getTodoDashboard({
-      data: { page: deps.page, status: deps.status, search: deps.search },
+      data: {
+        page: deps.page,
+        status: deps.status,
+        search: deps.search,
+        period: deps.period,
+      },
     })
 
     if (dashboard.pagination.page !== deps.page) {

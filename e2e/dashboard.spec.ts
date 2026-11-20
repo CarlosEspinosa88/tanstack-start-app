@@ -109,6 +109,7 @@ test.describe('authenticated dashboard', () => {
     await expect(
       page.getByRole('img', { name: 'Daily tasks created over the last 30 days' }),
     ).toBeVisible()
+    await expect(page.locator('.chart[data-period="30d"] .chart-column')).toHaveCount(30)
   })
 
   test.describe('before hydration', () => {
