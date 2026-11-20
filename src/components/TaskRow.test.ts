@@ -14,6 +14,7 @@ function renderTaskRow(isPending: boolean) {
         createdAt: new Date('2026-11-19T12:00:00.000Z'),
       },
       isSelected: true,
+      isSelectionDisabled: false,
       isEditing: false,
       isPending,
       editTitle: '',

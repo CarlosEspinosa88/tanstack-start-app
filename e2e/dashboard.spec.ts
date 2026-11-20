@@ -111,6 +111,20 @@ test.describe('authenticated dashboard', () => {
     ).toBeVisible()
   })
 
+  test.describe('before hydration', () => {
+    test.use({ javaScriptEnabled: false })
+
+    test('selection controls are disabled', async ({ page }) => {
+      await page.goto('/')
+      await expect(
+        page.getByRole('checkbox', { name: 'Select all tasks on this page' }),
+      ).toBeDisabled()
+      await expect(
+        page.getByRole('checkbox', { name: `Select task: ${taskTitle}` }),
+      ).toBeDisabled()
+    })
+  })
+
   test('selected tasks can be completed and deleted in bulk', async ({ page }) => {
     await page.goto('/')
     const row = page.locator('.task-row').filter({ hasText: taskTitle })

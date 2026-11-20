@@ -76,6 +76,7 @@ function Home() {
   const [pendingTodoIds, setPendingTodoIds] = useState<Set<string>>(new Set())
   const [selectedTodoIds, setSelectedTodoIds] = useState<Set<string>>(new Set())
   const [isBulkSaving, setIsBulkSaving] = useState(false)
+  const [isHydrated, setIsHydrated] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editingTitle, setEditingTitle] = useState('')
   const completionRate = summary.allCount
@@ -86,6 +87,10 @@ function Home() {
   useEffect(() => {
     setSearch(query.search)
   }, [query.search])
+
+  useEffect(() => {
+    setIsHydrated(true)
+  }, [])
 
   function navigateToTasks(next: Partial<typeof query>) {
     setSelectedTodoIds(new Set())
@@ -492,7 +497,7 @@ function Home() {
                 <input
                   aria-label="Select all tasks on this page"
                   checked={todos.length > 0 && todos.every((todo) => selectedTodoIds.has(todo.id))}
-                  disabled={!todos.length || isBulkSaving}
+                  disabled={!isHydrated || !todos.length || isBulkSaving}
                   onChange={(event) => {
                     const checked = event.currentTarget.checked
                     setSelectedTodoIds((current) => {
@@ -537,6 +542,7 @@ function Home() {
                   key={todo.id}
                   todo={todo}
                   isSelected={selectedTodoIds.has(todo.id)}
+                  isSelectionDisabled={!isHydrated}
                   isEditing={editingId === todo.id}
                   isPending={pendingTodoIds.has(todo.id) || isBulkSaving}
                   editTitle={editingTitle}

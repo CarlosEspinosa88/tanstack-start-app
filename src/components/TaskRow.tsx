@@ -10,6 +10,7 @@ export type TaskRowTodo = {
 type TaskRowProps = {
   todo: TaskRowTodo
   isSelected: boolean
+  isSelectionDisabled: boolean
   isEditing: boolean
   isPending: boolean
   editTitle: string
@@ -25,6 +26,7 @@ type TaskRowProps = {
 export function TaskRow({
   todo,
   isSelected,
+  isSelectionDisabled,
   isEditing,
   isPending,
   editTitle,
@@ -54,7 +56,7 @@ export function TaskRow({
         aria-label={`Select task: ${todo.title}`}
         checked={isSelected}
         className="task-select"
-        disabled={isPending}
+        disabled={isPending || isSelectionDisabled}
         onChange={onSelect}
         type="checkbox"
       />
