@@ -1,15 +1,19 @@
 import { createServerFn } from '@tanstack/react-start'
 import {
   createOwnedTodo,
+  deleteOwnedTodos,
   deleteOwnedTodo,
   getTodoDashboardData,
+  updateOwnedTodos,
   updateOwnedTodo,
 } from './todo-operations'
 import { createTodoRepository } from './todo-prisma-repository'
 import {
   CreateTodoInput,
+  DeleteTodosInput,
   DeleteTodoInput,
   TodoListInput,
+  UpdateTodosInput,
   UpdateTodoInput,
 } from './todo.validation'
 
@@ -66,4 +70,25 @@ export const deleteTodo = createServerFn({ method: 'POST' })
     const user = await requireRequestUser()
     const { prisma } = await import('./db')
     return deleteOwnedTodo(createTodoRepository(prisma), user.id, data.id)
+  })
+
+export const updateTodos = createServerFn({ method: 'POST' })
+  .inputValidator(UpdateTodosInput)
+  .handler(async ({ data }) => {
+    const user = await requireRequestUser()
+    const { prisma } = await import('./db')
+    return updateOwnedTodos(
+      createTodoRepository(prisma),
+      user.id,
+      data.ids,
+      data.done,
+    )
+  })
+
+export const deleteTodos = createServerFn({ method: 'POST' })
+  .inputValidator(DeleteTodosInput)
+  .handler(async ({ data }) => {
+    const user = await requireRequestUser()
+    const { prisma } = await import('./db')
+    return deleteOwnedTodos(createTodoRepository(prisma), user.id, data.ids)
   })

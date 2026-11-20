@@ -18,6 +18,7 @@ export type TodoListOptions = {
   page: number
   status: 'all' | 'open' | 'completed'
   search: string
+  period?: '7d' | '30d'
 }
 
 export type TodoRepository = {
@@ -40,6 +41,12 @@ export type TodoRepository = {
     done?: boolean
   }): Promise<TodoRecord | null>
   deleteOwned(args: { id: string; userId: string }): Promise<boolean>
+  updateManyOwned(args: {
+    ids: string[]
+    userId: string
+    done: boolean
+  }): Promise<number>
+  deleteManyOwned(args: { ids: string[]; userId: string }): Promise<number>
 }
 
 const pageSize = 20
@@ -56,7 +63,8 @@ export async function getTodoDashboardData(
     ...(options.status === 'completed' ? { done: true } : {}),
     ...(options.search ? { title: { contains: options.search } } : {}),
   }
-  const activityRange = getUtcActivityRange(now)
+  const activityDayCount = options.period === '30d' ? 30 : 7
+  const activityRange = getUtcActivityRange(now, activityDayCount)
   const [total, allCount, openCount, completedCount, activityDates] =
     await Promise.all([
       repository.count(where),
@@ -80,7 +88,7 @@ export async function getTodoDashboardData(
   return {
     todos,
     summary: { allCount, openCount, completedCount },
-    activity: buildTodoActivity(activityDates, now),
+    activity: buildTodoActivity(activityDates, now, activityDayCount),
     pagination: { page, pageSize, total, pageCount },
   }
 }
@@ -117,4 +125,21 @@ export async function deleteOwnedTodo(
   if (!deleted) {
     throw new Error('Todo not found')
   }
+}
+
+export function updateOwnedTodos(
+  repository: TodoRepository,
+  userId: string,
+  ids: string[],
+  done: boolean,
+) {
+  return repository.updateManyOwned({ ids, userId, done })
+}
+
+export function deleteOwnedTodos(
+  repository: TodoRepository,
+  userId: string,
+  ids: string[],
+) {
+  return repository.deleteManyOwned({ ids, userId })
 }

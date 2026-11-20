@@ -20,4 +20,19 @@ export const TodoListInput = z.object({
   page: z.number().int().min(1).default(1),
   status: z.enum(['all', 'open', 'completed']).default('all'),
   search: z.string().trim().max(140).default(''),
+  period: z.enum(['7d', '30d']).default('7d'),
+})
+
+const TodoIds = z.array(z.string().min(1)).min(1).max(20).refine(
+  (ids) => new Set(ids).size === ids.length,
+  { message: 'Todo ids must be unique' },
+)
+
+export const UpdateTodosInput = z.object({
+  ids: TodoIds,
+  done: z.boolean(),
+})
+
+export const DeleteTodosInput = z.object({
+  ids: TodoIds,
 })

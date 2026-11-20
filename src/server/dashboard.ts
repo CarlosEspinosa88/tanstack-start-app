@@ -13,6 +13,7 @@ export function getUtcDayStart(date: Date): Date {
 export function buildTodoActivity(
   createdAtDates: Date[],
   today = new Date(),
+  dayCount = 7,
 ): TodoActivityDay[] {
   const endDate = getUtcDayStart(today)
   const counts = new Map<string, number>()
@@ -22,26 +23,28 @@ export function buildTodoActivity(
     counts.set(dateKey, (counts.get(dateKey) ?? 0) + 1)
   }
 
-  return Array.from({ length: 7 }, (_, index) => {
+  return Array.from({ length: dayCount }, (_, index) => {
     const date = new Date(endDate)
-    date.setUTCDate(date.getUTCDate() - (6 - index))
+    date.setUTCDate(date.getUTCDate() - (dayCount - 1 - index))
     const dateKey = date.toISOString().slice(0, 10)
 
     return {
       dateKey,
-      label: date.toLocaleDateString(undefined, {
-        weekday: 'short',
-        timeZone: 'UTC',
-      }),
+      label: dayCount > 7
+        ? date.toLocaleDateString(undefined, { day: 'numeric', timeZone: 'UTC' })
+        : date.toLocaleDateString(undefined, {
+            weekday: 'short',
+            timeZone: 'UTC',
+          }),
       count: counts.get(dateKey) ?? 0,
     }
   })
 }
 
-export function getUtcActivityRange(today = new Date()) {
+export function getUtcActivityRange(today = new Date(), dayCount = 7) {
   const endDate = getUtcDayStart(today)
   const startDate = new Date(endDate)
-  startDate.setUTCDate(startDate.getUTCDate() - 6)
+  startDate.setUTCDate(startDate.getUTCDate() - (dayCount - 1))
   const exclusiveEndDate = new Date(endDate)
   exclusiveEndDate.setUTCDate(exclusiveEndDate.getUTCDate() + 1)
 

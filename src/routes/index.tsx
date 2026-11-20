@@ -1,16 +1,24 @@
 import { createFileRoute, redirect, useNavigate, useRouter } from '@tanstack/react-router'
-import { useEffect, useState, type CSSProperties, type FormEvent } from 'react'
+import {
+  useEffect,
+  useState,
+  type CSSProperties,
+  type FormEvent,
+} from 'react'
 import { z } from 'zod'
 import { TaskRow } from '../components/TaskRow'
 import {
   createTodo,
   deleteTodo,
+  deleteTodos,
   getCurrentUser,
   getTodoDashboard,
+  updateTodos,
   updateTodo,
 } from '../server/todo.server'
 
 type TodoFilter = 'all' | 'open' | 'completed'
+type ActivityPeriod = '7d' | '30d'
 type ProgressStyle = CSSProperties & { '--progress': string }
 
 export const Route = createFileRoute('/')({
@@ -18,14 +26,17 @@ export const Route = createFileRoute('/')({
     page: z.coerce.number().int().min(1).catch(1),
     status: z.enum(['all', 'open', 'completed']).catch('all'),
     search: z.string().catch(''),
+    period: z.enum(['7d', '30d']).catch('7d'),
   }).partial({
     page: true,
     status: true,
     search: true,
+    period: true,
   }).transform((search) => ({
     page: search.page ?? 1,
     status: search.status ?? 'all',
     search: search.search ?? '',
+    period: search.period ?? '7d',
   })),
   loaderDeps: ({ search }) => search,
   component: Home,
@@ -37,7 +48,12 @@ export const Route = createFileRoute('/')({
     }
 
     const dashboard = await getTodoDashboard({
-      data: { page: deps.page, status: deps.status, search: deps.search },
+      data: {
+        page: deps.page,
+        status: deps.status,
+        search: deps.search,
+        period: deps.period,
+      },
     })
 
     if (dashboard.pagination.page !== deps.page) {
@@ -63,6 +79,9 @@ function Home() {
   const [mutationError, setMutationError] = useState('')
   const [isSaving, setIsSaving] = useState(false)
   const [pendingTodoIds, setPendingTodoIds] = useState<Set<string>>(new Set())
+  const [selectedTodoIds, setSelectedTodoIds] = useState<Set<string>>(new Set())
+  const [isBulkSaving, setIsBulkSaving] = useState(false)
+  const [isHydrated, setIsHydrated] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editingTitle, setEditingTitle] = useState('')
   const completionRate = summary.allCount
@@ -74,7 +93,12 @@ function Home() {
     setSearch(query.search)
   }, [query.search])
 
+  useEffect(() => {
+    setIsHydrated(true)
+  }, [])
+
   function navigateToTasks(next: Partial<typeof query>) {
+    setSelectedTodoIds(new Set())
     return navigate({
       search: (previous) => ({
         ...previous,
@@ -86,7 +110,12 @@ function Home() {
 
   function handleSearch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    void navigateToTasks({ search: search.trim() })
+    const formData = new FormData(event.currentTarget)
+    const searchValue = formData.get('search')
+    const submittedSearch =
+      typeof searchValue === 'string' ? searchValue.trim() : search.trim()
+    setSearch(submittedSearch)
+    void navigateToTasks({ search: submittedSearch })
   }
 
   async function handleCreateTodo(event: FormEvent<HTMLFormElement>) {
@@ -180,6 +209,52 @@ function Home() {
     }
   }
 
+  async function handleCompleteSelected() {
+    const ids = [...selectedTodoIds]
+
+    if (!ids.length || isBulkSaving) {
+      return
+    }
+
+    setIsBulkSaving(true)
+    setMutationError('')
+
+    try {
+      await updateTodos({ data: { ids, done: true } })
+      setSelectedTodoIds(new Set())
+      await router.invalidate()
+    } catch {
+      setMutationError('Could not complete the selected tasks. Please try again.')
+    } finally {
+      setIsBulkSaving(false)
+    }
+  }
+
+  async function handleDeleteSelected() {
+    const ids = [...selectedTodoIds]
+
+    if (
+      !ids.length ||
+      isBulkSaving ||
+      !window.confirm(`Delete ${ids.length} selected task${ids.length === 1 ? '' : 's'}? This cannot be undone.`)
+    ) {
+      return
+    }
+
+    setIsBulkSaving(true)
+    setMutationError('')
+
+    try {
+      await deleteTodos({ data: { ids } })
+      setSelectedTodoIds(new Set())
+      await router.invalidate()
+    } catch {
+      setMutationError('Could not delete the selected tasks. Please try again.')
+    } finally {
+      setIsBulkSaving(false)
+    }
+  }
+
   return (
     <div className="app-shell">
       <a className="skip-link" href="#tasks">Skip to tasks</a>
@@ -235,10 +310,21 @@ function Home() {
                 A clear view of your tasks and the progress you have made.
               </p>
             </div>
-            <div className="date-chip">
+            <label className="date-chip">
               <span className="calendar-icon" aria-hidden="true">▦</span>
-              Last 7 days
-            </div>
+              <span className="visually-hidden">Activity period</span>
+              <select
+                aria-label="Activity period"
+                value={query.period}
+                onChange={(event) => {
+                  const period: ActivityPeriod = event.currentTarget.value === '30d' ? '30d' : '7d'
+                  void navigateToTasks({ period })
+                }}
+              >
+                <option value="7d">Last 7 days</option>
+                <option value="30d">Last 30 days</option>
+              </select>
+            </label>
           </section>
 
           <section className="metrics-grid" aria-label="Task summary">
@@ -290,11 +376,16 @@ function Home() {
               <div className="panel-heading">
                 <div>
                   <h2>Task activity</h2>
-                  <p>Tasks created over the last 7 days</p>
+                  <p>Tasks created over the last {query.period === '30d' ? 30 : 7} days</p>
                 </div>
-                <span className="panel-period">7 days</span>
+                <span className="panel-period">{query.period === '30d' ? 30 : 7} days</span>
               </div>
-              <div className="chart" role="img" aria-label="Daily tasks created over the last seven days">
+              <div
+                className="chart"
+                data-period={query.period}
+                role="img"
+                aria-label={`Daily tasks created over the last ${query.period === '30d' ? 30 : 7} days`}
+              >
                 {activity.map((day) => (
                   <div className="chart-column" key={day.dateKey}>
                     <span className="chart-count">{day.count || ''}</span>
@@ -350,12 +441,26 @@ function Home() {
                 <span aria-hidden="true">⌕</span>
                 <input
                   type="search"
+                  name="search"
                   maxLength={140}
                   placeholder="Search tasks"
                   value={search}
                   onChange={(event) => setSearch(event.currentTarget.value)}
                   aria-label="Search tasks"
                 />
+                {search && (
+                  <button
+                    aria-label="Clear task search"
+                    className="search-clear"
+                    onClick={() => {
+                      setSearch('')
+                      void navigateToTasks({ search: '' })
+                    }}
+                    type="button"
+                  >
+                    Clear
+                  </button>
+                )}
                 <button type="submit" className="search-submit">Search</button>
               </form>
             </div>
@@ -392,13 +497,59 @@ function Home() {
                 </button>
               ))}
             </div>
+            <div className="bulk-actions">
+              <label>
+                <input
+                  aria-label="Select all tasks on this page"
+                  checked={todos.length > 0 && todos.every((todo) => selectedTodoIds.has(todo.id))}
+                  disabled={!isHydrated || !todos.length || isBulkSaving}
+                  onChange={(event) => {
+                    const checked = event.currentTarget.checked
+                    setSelectedTodoIds((current) => {
+                      const next = new Set(current)
+                      for (const todo of todos) {
+                        if (checked) {
+                          next.add(todo.id)
+                        } else {
+                          next.delete(todo.id)
+                        }
+                      }
+                      return next
+                    })
+                  }}
+                  type="checkbox"
+                />
+                Select page
+              </label>
+              {selectedTodoIds.size > 0 && (
+                <div className="bulk-buttons">
+                  <span>{selectedTodoIds.size} selected</span>
+                  <button
+                    disabled={isBulkSaving}
+                    onClick={() => void handleCompleteSelected()}
+                    type="button"
+                  >
+                    {isBulkSaving ? 'Saving…' : 'Mark complete'}
+                  </button>
+                  <button
+                    disabled={isBulkSaving}
+                    onClick={() => void handleDeleteSelected()}
+                    type="button"
+                  >
+                    Delete selected
+                  </button>
+                </div>
+              )}
+            </div>
             <ul className="task-list">
               {todos.map((todo) => (
                 <TaskRow
                   key={todo.id}
                   todo={todo}
+                  isSelected={selectedTodoIds.has(todo.id)}
+                  isSelectionDisabled={!isHydrated}
                   isEditing={editingId === todo.id}
-                  isPending={pendingTodoIds.has(todo.id)}
+                  isPending={pendingTodoIds.has(todo.id) || isBulkSaving}
                   editTitle={editingTitle}
                   onEditTitleChange={setEditingTitle}
                   onStartEdit={() => {
@@ -408,6 +559,15 @@ function Home() {
                   onCancelEdit={() => setEditingId(null)}
                   onSaveEdit={() => void handleSaveEdit(todo.id)}
                   onToggle={() => void handleToggleTodo(todo.id, todo.done)}
+                  onSelect={() => setSelectedTodoIds((current) => {
+                    const next = new Set(current)
+                    if (next.has(todo.id)) {
+                      next.delete(todo.id)
+                    } else {
+                      next.add(todo.id)
+                    }
+                    return next
+                  })}
                   onDelete={() => void handleDeleteTodo(todo.id, todo.title)}
                 />
               ))}

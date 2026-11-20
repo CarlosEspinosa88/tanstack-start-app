@@ -1,6 +1,6 @@
 # Todo dashboard
 
-A full-stack todo application built with TanStack Start, React, TypeScript, Prisma, and PostgreSQL. Sign in with Google to view, create, and complete todos saved to your account. The dashboard includes task totals, completion progress, a seven-day creation chart, and task search and filters. Google sign-in requires a verified email address.
+A full-stack todo application built with TanStack Start, React, TypeScript, Prisma, and PostgreSQL. Sign in with Google to view, create, and complete todos saved to your account. The dashboard includes task totals, completion progress, a seven- or 30-day creation chart, URL-backed task search, filters, and bulk completion or deletion for the current page. Google sign-in requires a verified email address.
 
 The checked-in DuckDB fixture is used to seed sample users and todos into the local database; it is not shown as a shared dashboard.
 
@@ -40,7 +40,7 @@ npm run dev
 
 ## Demo data and database
 
-The app's data model is intentionally small: users own todos, and each todo has a title, completion flag, and creation time. The dashboard searches and filters on the server and displays 20 matching tasks per page. The checked-in sample fixture powers the Prisma seed. To regenerate it with DuckDB:
+The app's data model is intentionally small: users own todos, and each todo has a title, completion flag, and creation time. The dashboard searches and filters on the server and displays 20 matching tasks per page. Search and reporting period are stored in the URL, and bulk actions are limited to selected tasks on the current page. The checked-in sample fixture powers the Prisma seed. To regenerate it with DuckDB:
 
 ```sh
 python3 -m venv .venv
@@ -63,7 +63,7 @@ The sample user is `demo@todo.dev`. Database configuration is read from `DATABAS
 
 Configure `DATABASE_URL`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI`, and a strong `JWT_SECRET` in the deployment environment. Set the Google redirect URI to the exact HTTPS callback URL (`https://<your-domain>/auth/callback`) and register that same URL with Google. Production session and OAuth state cookies are marked `Secure`; deploy behind HTTPS.
 
-Before releasing, run `npm run prisma:deploy` against the production database, then verify the deployed app can complete Google sign-in, create/edit/complete/delete a task, and cannot access a task owned by a different account. CI validates the Prisma schema, runs CRUD and ownership integration tests against PostgreSQL, checks TypeScript, and builds the production app including the Prisma engine packaging check.
+Before releasing, run `npm run prisma:deploy` against the production database, then verify the deployed app can complete Google sign-in, create/edit/complete/delete a task, and cannot access a task owned by a different account. CI validates the Prisma schema, tests OAuth callback and logout response flows, runs CRUD, bulk-action, and ownership integration tests against PostgreSQL, checks dashboard behavior in Chromium at mobile and desktop sizes, checks TypeScript, and builds the production app including the Prisma engine packaging check.
 
 ## Scripts
 
@@ -73,6 +73,7 @@ Before releasing, run `npm run prisma:deploy` against the production database, t
 | `npm run build` | Regenerate Prisma Client for the build platform, then package its query engine with the production build |
 | `npm run preview` | Preview the production build |
 | `npm test` | Run focused unit tests |
+| `npm run test:e2e` | Run Chromium dashboard tests; set `TEST_DATABASE_URL` and install the browser with `npx playwright install chromium` (tests skip without the database) |
 | `npm run typecheck` | Check TypeScript types |
 | `npm run prisma:generate` | Generate the Prisma client |
 | `npm run prisma:validate` | Validate the Prisma schema |

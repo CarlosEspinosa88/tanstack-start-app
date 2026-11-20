@@ -9,6 +9,8 @@ export type TaskRowTodo = {
 
 type TaskRowProps = {
   todo: TaskRowTodo
+  isSelected: boolean
+  isSelectionDisabled: boolean
   isEditing: boolean
   isPending: boolean
   editTitle: string
@@ -17,11 +19,14 @@ type TaskRowProps = {
   onCancelEdit: () => void
   onSaveEdit: () => void
   onToggle: () => void
+  onSelect: () => void
   onDelete: () => void
 }
 
 export function TaskRow({
   todo,
+  isSelected,
+  isSelectionDisabled,
   isEditing,
   isPending,
   editTitle,
@@ -30,6 +35,7 @@ export function TaskRow({
   onCancelEdit,
   onSaveEdit,
   onToggle,
+  onSelect,
   onDelete,
 }: TaskRowProps) {
   function handleEditKeyDown(event: KeyboardEvent<HTMLInputElement>) {
@@ -46,6 +52,14 @@ export function TaskRow({
 
   return (
     <li className="task-row" aria-busy={isPending}>
+      <input
+        aria-label={`Select task: ${todo.title}`}
+        checked={isSelected}
+        className="task-select"
+        disabled={isPending || isSelectionDisabled}
+        onChange={onSelect}
+        type="checkbox"
+      />
       <button
         aria-label={`${todo.done ? 'Mark incomplete' : 'Mark complete'}: ${todo.title}`}
         className={todo.done ? 'task-check checked' : 'task-check'}
