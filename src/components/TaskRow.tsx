@@ -5,6 +5,7 @@ export type TaskRowTodo = {
   title: string
   done: boolean
   createdAt: Date
+  dueDate: Date | null
 }
 
 type TaskRowProps = {
@@ -15,7 +16,9 @@ type TaskRowProps = {
   isEditing: boolean
   isPending: boolean
   editTitle: string
+  editDueDate: string
   onEditTitleChange: (title: string) => void
+  onEditDueDateChange: (dueDate: string) => void
   onStartEdit: () => void
   onCancelEdit: () => void
   onSaveEdit: () => void
@@ -32,7 +35,9 @@ export function TaskRow({
   isEditing,
   isPending,
   editTitle,
+  editDueDate,
   onEditTitleChange,
+  onEditDueDateChange,
   onStartEdit,
   onCancelEdit,
   onSaveEdit,
@@ -51,6 +56,15 @@ export function TaskRow({
       onCancelEdit()
     }
   }
+
+  const dueDateProgress = todo.dueDate
+    ? getDueDateProgress(todo.createdAt, todo.dueDate, new Date())
+    : null
+  const isOverdue = Boolean(
+    todo.dueDate &&
+    !todo.done &&
+    getUtcDay(new Date()) > getUtcDay(todo.dueDate),
+  )
 
   return (
     <li className="task-row" aria-busy={isPending}>
@@ -84,15 +98,24 @@ export function TaskRow({
         </button>
       )}
       {isEditing && !readOnly ? (
-        <input
-          autoFocus
-          className="task-edit-input"
-          aria-label={`Edit task: ${todo.title}`}
-          maxLength={140}
-          value={editTitle}
-          onChange={(event) => onEditTitleChange(event.currentTarget.value)}
-          onKeyDown={handleEditKeyDown}
-        />
+        <>
+          <input
+            autoFocus
+            className="task-edit-input"
+            aria-label={`Edit task: ${todo.title}`}
+            maxLength={140}
+            value={editTitle}
+            onChange={(event) => onEditTitleChange(event.currentTarget.value)}
+            onKeyDown={handleEditKeyDown}
+          />
+          <input
+            aria-label={`Due date for task: ${todo.title}`}
+            className="task-due-date-input"
+            onChange={(event) => onEditDueDateChange(event.currentTarget.value)}
+            type="date"
+            value={editDueDate}
+          />
+        </>
       ) : (
         <span className={todo.done ? 'task-title completed-title' : 'task-title'}>
           {todo.title}
@@ -106,8 +129,31 @@ export function TaskRow({
         {new Date(todo.createdAt).toLocaleDateString(undefined, {
           month: 'short',
           day: 'numeric',
+          timeZone: 'UTC',
         })}
       </time>
+      {todo.dueDate && dueDateProgress !== null && (
+        <span className={`due-date-progress${isOverdue ? ' overdue' : ''}`}>
+          <time dateTime={todo.dueDate.toISOString().slice(0, 10)}>
+            {isOverdue ? 'Overdue' : 'Due'}{' '}
+            {todo.dueDate.toLocaleDateString(undefined, {
+              month: 'short',
+              day: 'numeric',
+              timeZone: 'UTC',
+            })}
+          </time>
+          <span
+            aria-label={`Time elapsed until due date: ${dueDateProgress}%`}
+            aria-valuemax={100}
+            aria-valuemin={0}
+            aria-valuenow={dueDateProgress}
+            className="due-date-progress-track"
+            role="progressbar"
+          >
+            <span style={{ width: `${dueDateProgress}%` }} />
+          </span>
+        </span>
+      )}
       {!readOnly && isEditing ? (
         <span className="task-actions">
           <button
@@ -133,4 +179,21 @@ export function TaskRow({
       ) : null}
     </li>
   )
+}
+
+function getUtcDay(date: Date) {
+  return Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate())
+}
+
+export function getDueDateProgress(createdAt: Date, dueDate: Date, now: Date) {
+  const start = getUtcDay(createdAt)
+  const deadline = getUtcDay(dueDate)
+  const current = getUtcDay(now)
+  const duration = deadline - start
+
+  if (duration <= 0) {
+    return current >= deadline ? 100 : 0
+  }
+
+  return Math.max(0, Math.min(100, Math.round(((current - start) / duration) * 100)))
 }

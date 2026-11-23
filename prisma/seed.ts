@@ -40,6 +40,9 @@ async function main() {
         update: {
           title: todo.title,
           done: todo.done,
+          dueDate: todo.dueDate
+            ? new Date(`${todo.dueDate}T00:00:00.000Z`)
+            : null,
           userId,
           createdAt: new Date(todo.createdAt),
         },
@@ -47,6 +50,9 @@ async function main() {
           id: todo.id,
           title: todo.title,
           done: todo.done,
+          dueDate: todo.dueDate
+            ? new Date(`${todo.dueDate}T00:00:00.000Z`)
+            : null,
           userId,
           createdAt: new Date(todo.createdAt),
         },

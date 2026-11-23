@@ -2,13 +2,19 @@ import { z } from 'zod'
 
 export const CreateTodoInput = z.object({
   title: z.string().trim().min(1).max(140),
+  dueDate: z.iso.date().optional(),
 })
 
 export const UpdateTodoInput = z.object({
   id: z.string().min(1),
   title: z.string().trim().min(1).max(140).optional(),
   done: z.boolean().optional(),
-}).refine((data) => data.title !== undefined || data.done !== undefined, {
+  dueDate: z.iso.date().nullable().optional(),
+}).refine((data) => (
+  data.title !== undefined ||
+  data.done !== undefined ||
+  data.dueDate !== undefined
+), {
   message: 'At least one field must be updated',
 })
 

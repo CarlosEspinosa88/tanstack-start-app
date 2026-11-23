@@ -17,6 +17,7 @@ const sampleTodo: TodoRecord = {
   title: 'Plan week',
   done: false,
   createdAt: new Date('2026-11-19T12:00:00.000Z'),
+  dueDate: null,
   userId: 'user-a',
 }
 
@@ -25,8 +26,14 @@ function createRepository(overrides: Partial<TodoRepository> = {}) {
     counts: TodoWhere[]
     page?: { where: TodoWhere; skip: number; take: number }
     activity?: { userId: string; startDate: Date; exclusiveEndDate: Date }
-    created?: { title: string; userId: string }
-    updated?: { id: string; userId: string; title?: string; done?: boolean }
+    created?: { title: string; dueDate?: Date; userId: string }
+    updated?: {
+      id: string
+      userId: string
+      title?: string
+      done?: boolean
+      dueDate?: Date | null
+    }
     deleted?: { id: string; userId: string }
     updatedMany?: { ids: string[]; userId: string; done: boolean }
     deletedMany?: { ids: string[]; userId: string }
@@ -129,17 +136,24 @@ test('dashboard requests the selected activity period', async () => {
 test('create, update, and delete always carry the authenticated owner id', async () => {
   const { repository, calls } = createRepository()
 
-  await createOwnedTodo(repository, 'user-a', 'Plan week')
+  const dueDate = new Date('2026-12-01T00:00:00.000Z')
+  await createOwnedTodo(repository, 'user-a', 'Plan week', dueDate)
   await updateOwnedTodo(repository, 'user-a', {
     id: 'todo-1',
     title: 'Plan next week',
+    dueDate: null,
   })
   await deleteOwnedTodo(repository, 'user-a', 'todo-1')
 
-  assert.deepEqual(calls.created, { title: 'Plan week', userId: 'user-a' })
+  assert.deepEqual(calls.created, {
+    title: 'Plan week',
+    dueDate,
+    userId: 'user-a',
+  })
   assert.deepEqual(calls.updated, {
     id: 'todo-1',
     title: 'Plan next week',
+    dueDate: null,
     userId: 'user-a',
   })
   assert.deepEqual(calls.deleted, { id: 'todo-1', userId: 'user-a' })

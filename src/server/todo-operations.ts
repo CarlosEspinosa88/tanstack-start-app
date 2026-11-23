@@ -5,6 +5,7 @@ export type TodoRecord = {
   title: string
   done: boolean
   createdAt: Date
+  dueDate: Date | null
   userId: string
 }
 
@@ -33,12 +34,17 @@ export type TodoRepository = {
     startDate: Date
     exclusiveEndDate: Date
   }): Promise<Date[]>
-  create(args: { title: string; userId: string }): Promise<TodoRecord>
+  create(args: {
+    title: string
+    dueDate?: Date
+    userId: string
+  }): Promise<TodoRecord>
   updateOwned(args: {
     id: string
     userId: string
     title?: string
     done?: boolean
+    dueDate?: Date | null
   }): Promise<TodoRecord | null>
   deleteOwned(args: { id: string; userId: string }): Promise<boolean>
   updateManyOwned(args: {
@@ -97,14 +103,20 @@ export async function createOwnedTodo(
   repository: TodoRepository,
   userId: string,
   title: string,
+  dueDate?: Date,
 ) {
-  return repository.create({ title, userId })
+  return repository.create({ title, dueDate, userId })
 }
 
 export async function updateOwnedTodo(
   repository: TodoRepository,
   userId: string,
-  input: { id: string; title?: string; done?: boolean },
+  input: {
+    id: string
+    title?: string
+    done?: boolean
+    dueDate?: Date | null
+  },
 ) {
   const todo = await repository.updateOwned({ ...input, userId })
 

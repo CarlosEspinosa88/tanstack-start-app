@@ -91,6 +91,7 @@ function Home() {
     : undefined
   const [search, setSearch] = useState('')
   const [newTitle, setNewTitle] = useState('')
+  const [newDueDate, setNewDueDate] = useState('')
   const [mutationError, setMutationError] = useState('')
   const [isSaving, setIsSaving] = useState(false)
   const [pendingTodoIds, setPendingTodoIds] = useState<Set<string>>(new Set())
@@ -99,6 +100,7 @@ function Home() {
   const [isHydrated, setIsHydrated] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editingTitle, setEditingTitle] = useState('')
+  const [editingDueDate, setEditingDueDate] = useState('')
   const [inviteEmail, setInviteEmail] = useState('')
   const [sharingError, setSharingError] = useState('')
   const [sharingMessage, setSharingMessage] = useState('')
@@ -149,8 +151,11 @@ function Home() {
     setMutationError('')
 
     try {
-      await createTodo({ data: { title } })
+      await createTodo({
+        data: { title, dueDate: newDueDate || undefined },
+      })
       setNewTitle('')
+      setNewDueDate('')
       await router.invalidate()
     } catch {
       setMutationError('Could not save your task. Please try again.')
@@ -192,7 +197,9 @@ function Home() {
     setMutationError('')
 
     try {
-      await updateTodo({ data: { id, title } })
+      await updateTodo({
+        data: { id, title, dueDate: editingDueDate || null },
+      })
       setEditingId(null)
       await router.invalidate()
     } catch {
@@ -661,6 +668,16 @@ function Home() {
                 placeholder="Add a task"
                 value={newTitle}
               />
+              <label className="visually-hidden" htmlFor="new-todo-due-date">
+                Due date
+              </label>
+              <input
+                className="todo-due-date-input"
+                id="new-todo-due-date"
+                onChange={(event) => setNewDueDate(event.currentTarget.value)}
+                type="date"
+                value={newDueDate}
+              />
               <button disabled={!newTitle.trim() || isSaving} type="submit">
                 {isSaving ? 'Saving…' : 'Add task'}
               </button>
@@ -738,10 +755,13 @@ function Home() {
                   isEditing={editingId === todo.id}
                   isPending={pendingTodoIds.has(todo.id) || isBulkSaving}
                   editTitle={editingTitle}
+                  editDueDate={editingDueDate}
                   onEditTitleChange={setEditingTitle}
+                  onEditDueDateChange={setEditingDueDate}
                   onStartEdit={() => {
                     setEditingId(todo.id)
                     setEditingTitle(todo.title)
+                    setEditingDueDate(todo.dueDate?.toISOString().slice(0, 10) ?? '')
                   }}
                   onCancelEdit={() => setEditingId(null)}
                   onSaveEdit={() => void handleSaveEdit(todo.id)}

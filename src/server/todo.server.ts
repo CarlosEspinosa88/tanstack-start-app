@@ -126,7 +126,12 @@ export const createTodo = createServerFn({ method: 'POST' })
   .handler(async ({ data }) => {
     const user = await requireRequestUser()
     const { prisma } = await import('./db')
-    return createOwnedTodo(createTodoRepository(prisma), user.id, data.title)
+    return createOwnedTodo(
+      createTodoRepository(prisma),
+      user.id,
+      data.title,
+      data.dueDate ? new Date(`${data.dueDate}T00:00:00.000Z`) : undefined,
+    )
   })
 
 export const updateTodo = createServerFn({ method: 'POST' })
@@ -134,7 +139,14 @@ export const updateTodo = createServerFn({ method: 'POST' })
   .handler(async ({ data }) => {
     const user = await requireRequestUser()
     const { prisma } = await import('./db')
-    return updateOwnedTodo(createTodoRepository(prisma), user.id, data)
+    const { dueDate: dueDateInput, ...fields } = data
+    const dueDate = typeof dueDateInput === 'string'
+      ? new Date(`${dueDateInput}T00:00:00.000Z`)
+      : dueDateInput
+    return updateOwnedTodo(createTodoRepository(prisma), user.id, {
+      ...fields,
+      dueDate,
+    })
   })
 
 export const deleteTodo = createServerFn({ method: 'POST' })

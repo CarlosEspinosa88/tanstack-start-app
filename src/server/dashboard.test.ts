@@ -61,10 +61,27 @@ test('todo inputs trim titles and reject invalid or empty updates', () => {
   assert.deepEqual(CreateTodoInput.parse({ title: '  Plan week  ' }), {
     title: 'Plan week',
   })
+  assert.deepEqual(
+    CreateTodoInput.parse({ title: 'Plan week', dueDate: '2026-12-01' }),
+    { title: 'Plan week', dueDate: '2026-12-01' },
+  )
+  assert.equal(
+    CreateTodoInput.safeParse({ title: 'Plan week', dueDate: '2026-02-30' })
+      .success,
+    false,
+  )
   assert.equal(CreateTodoInput.safeParse({ title: '   ' }).success, false)
   assert.equal(CreateTodoInput.safeParse({ title: 'x'.repeat(141) }).success, false)
   assert.equal(UpdateTodoInput.safeParse({ id: 'todo-1', done: true }).success, true)
   assert.equal(UpdateTodoInput.safeParse({ id: 'todo-1', title: '  Edit  ' }).success, true)
+  assert.equal(
+    UpdateTodoInput.safeParse({ id: 'todo-1', dueDate: '2026-12-01' }).success,
+    true,
+  )
+  assert.equal(
+    UpdateTodoInput.safeParse({ id: 'todo-1', dueDate: null }).success,
+    true,
+  )
   assert.equal(UpdateTodoInput.safeParse({ id: 'todo-1' }).success, false)
   assert.equal(DeleteTodoInput.safeParse({ id: '' }).success, false)
 })
