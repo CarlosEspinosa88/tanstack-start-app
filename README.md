@@ -61,16 +61,16 @@ The sample user is `demo@todo.dev`. Database configuration is read from `DATABAS
 
 ## Production release checks
 
-Configure `DATABASE_URL`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI`, and a strong `JWT_SECRET` in the deployment environment. Set the Google redirect URI to the exact HTTPS callback URL (`https://<your-domain>/auth/callback`) and register that same URL with Google. Production session and OAuth state cookies are marked `Secure`; deploy behind HTTPS.
+Configure `DATABASE_URL`, `DIRECT_URL`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI`, and a strong `JWT_SECRET` in Vercel's Production environment. Use the Supabase pooled connection for `DATABASE_URL` and a direct or session-pooler connection for `DIRECT_URL`, which Prisma uses to apply migrations. Set the Google redirect URI to the exact HTTPS callback URL (`https://<your-domain>/auth/callback`) and register that same URL with Google. Production session and OAuth state cookies are marked `Secure`; deploy behind HTTPS.
 
-Before releasing, run `npm run prisma:deploy` against the production database, then verify the deployed app can complete Google sign-in, create/edit/complete/delete a task, and cannot access a task owned by a different account. CI validates the Prisma schema, tests OAuth callback and logout response flows, runs CRUD, bulk-action, and ownership integration tests against PostgreSQL, checks dashboard behavior in Chromium at mobile and desktop sizes, checks TypeScript, and builds the production app including the Prisma engine packaging check.
+The production Vercel build runs `prisma migrate deploy` before building the app. Preview deployments do not run migrations. Verify the deployed app can complete Google sign-in, create/edit/complete/delete a task, and cannot access a task owned by a different account. CI validates the Prisma schema, tests OAuth callback and logout response flows, runs CRUD, bulk-action, and ownership integration tests against PostgreSQL, checks dashboard behavior in Chromium at mobile and desktop sizes, checks TypeScript, and builds the production app including the Prisma engine packaging check.
 
 ## Scripts
 
 | Command | Purpose |
 | --- | --- |
 | `npm run dev` | Start the Vite development server |
-| `npm run build` | Regenerate Prisma Client for the build platform, then package its query engine with the production build |
+| `npm run build` | Apply migrations on Vercel production builds, regenerate Prisma Client for the build platform, then package its query engine with the production build |
 | `npm run preview` | Preview the production build |
 | `npm test` | Run focused unit tests |
 | `npm run test:e2e` | Run Chromium dashboard tests; set `TEST_DATABASE_URL` and install the browser with `npx playwright install chromium` (tests skip without the database) |
