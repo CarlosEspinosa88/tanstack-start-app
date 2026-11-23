@@ -207,6 +207,8 @@ export type UserWhereInput = {
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
   todos?: Prisma.TodoListRelationFilter
+  ownedBoardShares?: Prisma.BoardShareListRelationFilter
+  receivedBoardShares?: Prisma.BoardShareListRelationFilter
 }
 
 export type UserOrderByWithRelationInput = {
@@ -219,6 +221,8 @@ export type UserOrderByWithRelationInput = {
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   todos?: Prisma.TodoOrderByRelationAggregateInput
+  ownedBoardShares?: Prisma.BoardShareOrderByRelationAggregateInput
+  receivedBoardShares?: Prisma.BoardShareOrderByRelationAggregateInput
 }
 
 export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -234,6 +238,8 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
   todos?: Prisma.TodoListRelationFilter
+  ownedBoardShares?: Prisma.BoardShareListRelationFilter
+  receivedBoardShares?: Prisma.BoardShareListRelationFilter
 }, "id" | "email" | "googleId">
 
 export type UserOrderByWithAggregationInput = {
@@ -274,6 +280,8 @@ export type UserCreateInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   todos?: Prisma.TodoCreateNestedManyWithoutUserInput
+  ownedBoardShares?: Prisma.BoardShareCreateNestedManyWithoutOwnerInput
+  receivedBoardShares?: Prisma.BoardShareCreateNestedManyWithoutRecipientInput
 }
 
 export type UserUncheckedCreateInput = {
@@ -286,6 +294,8 @@ export type UserUncheckedCreateInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   todos?: Prisma.TodoUncheckedCreateNestedManyWithoutUserInput
+  ownedBoardShares?: Prisma.BoardShareUncheckedCreateNestedManyWithoutOwnerInput
+  receivedBoardShares?: Prisma.BoardShareUncheckedCreateNestedManyWithoutRecipientInput
 }
 
 export type UserUpdateInput = {
@@ -298,6 +308,8 @@ export type UserUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   todos?: Prisma.TodoUpdateManyWithoutUserNestedInput
+  ownedBoardShares?: Prisma.BoardShareUpdateManyWithoutOwnerNestedInput
+  receivedBoardShares?: Prisma.BoardShareUpdateManyWithoutRecipientNestedInput
 }
 
 export type UserUncheckedUpdateInput = {
@@ -310,6 +322,8 @@ export type UserUncheckedUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   todos?: Prisma.TodoUncheckedUpdateManyWithoutUserNestedInput
+  ownedBoardShares?: Prisma.BoardShareUncheckedUpdateManyWithoutOwnerNestedInput
+  receivedBoardShares?: Prisma.BoardShareUncheckedUpdateManyWithoutRecipientNestedInput
 }
 
 export type UserCreateManyInput = {
@@ -409,6 +423,34 @@ export type UserUpdateOneRequiredWithoutTodosNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutTodosInput, Prisma.UserUpdateWithoutTodosInput>, Prisma.UserUncheckedUpdateWithoutTodosInput>
 }
 
+export type UserCreateNestedOneWithoutOwnedBoardSharesInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutOwnedBoardSharesInput, Prisma.UserUncheckedCreateWithoutOwnedBoardSharesInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutOwnedBoardSharesInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserCreateNestedOneWithoutReceivedBoardSharesInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutReceivedBoardSharesInput, Prisma.UserUncheckedCreateWithoutReceivedBoardSharesInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutReceivedBoardSharesInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutOwnedBoardSharesNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutOwnedBoardSharesInput, Prisma.UserUncheckedCreateWithoutOwnedBoardSharesInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutOwnedBoardSharesInput
+  upsert?: Prisma.UserUpsertWithoutOwnedBoardSharesInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutOwnedBoardSharesInput, Prisma.UserUpdateWithoutOwnedBoardSharesInput>, Prisma.UserUncheckedUpdateWithoutOwnedBoardSharesInput>
+}
+
+export type UserUpdateOneRequiredWithoutReceivedBoardSharesNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutReceivedBoardSharesInput, Prisma.UserUncheckedCreateWithoutReceivedBoardSharesInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutReceivedBoardSharesInput
+  upsert?: Prisma.UserUpsertWithoutReceivedBoardSharesInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutReceivedBoardSharesInput, Prisma.UserUpdateWithoutReceivedBoardSharesInput>, Prisma.UserUncheckedUpdateWithoutReceivedBoardSharesInput>
+}
+
 export type UserCreateWithoutTodosInput = {
   id?: string
   email: string
@@ -418,6 +460,8 @@ export type UserCreateWithoutTodosInput = {
   role?: string
   createdAt?: Date | string
   updatedAt?: Date | string
+  ownedBoardShares?: Prisma.BoardShareCreateNestedManyWithoutOwnerInput
+  receivedBoardShares?: Prisma.BoardShareCreateNestedManyWithoutRecipientInput
 }
 
 export type UserUncheckedCreateWithoutTodosInput = {
@@ -429,6 +473,8 @@ export type UserUncheckedCreateWithoutTodosInput = {
   role?: string
   createdAt?: Date | string
   updatedAt?: Date | string
+  ownedBoardShares?: Prisma.BoardShareUncheckedCreateNestedManyWithoutOwnerInput
+  receivedBoardShares?: Prisma.BoardShareUncheckedCreateNestedManyWithoutRecipientInput
 }
 
 export type UserCreateOrConnectWithoutTodosInput = {
@@ -456,6 +502,8 @@ export type UserUpdateWithoutTodosInput = {
   role?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  ownedBoardShares?: Prisma.BoardShareUpdateManyWithoutOwnerNestedInput
+  receivedBoardShares?: Prisma.BoardShareUpdateManyWithoutRecipientNestedInput
 }
 
 export type UserUncheckedUpdateWithoutTodosInput = {
@@ -467,6 +515,144 @@ export type UserUncheckedUpdateWithoutTodosInput = {
   role?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  ownedBoardShares?: Prisma.BoardShareUncheckedUpdateManyWithoutOwnerNestedInput
+  receivedBoardShares?: Prisma.BoardShareUncheckedUpdateManyWithoutRecipientNestedInput
+}
+
+export type UserCreateWithoutOwnedBoardSharesInput = {
+  id?: string
+  email: string
+  name?: string | null
+  picture?: string | null
+  googleId: string
+  role?: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  todos?: Prisma.TodoCreateNestedManyWithoutUserInput
+  receivedBoardShares?: Prisma.BoardShareCreateNestedManyWithoutRecipientInput
+}
+
+export type UserUncheckedCreateWithoutOwnedBoardSharesInput = {
+  id?: string
+  email: string
+  name?: string | null
+  picture?: string | null
+  googleId: string
+  role?: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  todos?: Prisma.TodoUncheckedCreateNestedManyWithoutUserInput
+  receivedBoardShares?: Prisma.BoardShareUncheckedCreateNestedManyWithoutRecipientInput
+}
+
+export type UserCreateOrConnectWithoutOwnedBoardSharesInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutOwnedBoardSharesInput, Prisma.UserUncheckedCreateWithoutOwnedBoardSharesInput>
+}
+
+export type UserCreateWithoutReceivedBoardSharesInput = {
+  id?: string
+  email: string
+  name?: string | null
+  picture?: string | null
+  googleId: string
+  role?: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  todos?: Prisma.TodoCreateNestedManyWithoutUserInput
+  ownedBoardShares?: Prisma.BoardShareCreateNestedManyWithoutOwnerInput
+}
+
+export type UserUncheckedCreateWithoutReceivedBoardSharesInput = {
+  id?: string
+  email: string
+  name?: string | null
+  picture?: string | null
+  googleId: string
+  role?: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  todos?: Prisma.TodoUncheckedCreateNestedManyWithoutUserInput
+  ownedBoardShares?: Prisma.BoardShareUncheckedCreateNestedManyWithoutOwnerInput
+}
+
+export type UserCreateOrConnectWithoutReceivedBoardSharesInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutReceivedBoardSharesInput, Prisma.UserUncheckedCreateWithoutReceivedBoardSharesInput>
+}
+
+export type UserUpsertWithoutOwnedBoardSharesInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutOwnedBoardSharesInput, Prisma.UserUncheckedUpdateWithoutOwnedBoardSharesInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutOwnedBoardSharesInput, Prisma.UserUncheckedCreateWithoutOwnedBoardSharesInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutOwnedBoardSharesInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutOwnedBoardSharesInput, Prisma.UserUncheckedUpdateWithoutOwnedBoardSharesInput>
+}
+
+export type UserUpdateWithoutOwnedBoardSharesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  picture?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  googleId?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  todos?: Prisma.TodoUpdateManyWithoutUserNestedInput
+  receivedBoardShares?: Prisma.BoardShareUpdateManyWithoutRecipientNestedInput
+}
+
+export type UserUncheckedUpdateWithoutOwnedBoardSharesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  picture?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  googleId?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  todos?: Prisma.TodoUncheckedUpdateManyWithoutUserNestedInput
+  receivedBoardShares?: Prisma.BoardShareUncheckedUpdateManyWithoutRecipientNestedInput
+}
+
+export type UserUpsertWithoutReceivedBoardSharesInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutReceivedBoardSharesInput, Prisma.UserUncheckedUpdateWithoutReceivedBoardSharesInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutReceivedBoardSharesInput, Prisma.UserUncheckedCreateWithoutReceivedBoardSharesInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutReceivedBoardSharesInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutReceivedBoardSharesInput, Prisma.UserUncheckedUpdateWithoutReceivedBoardSharesInput>
+}
+
+export type UserUpdateWithoutReceivedBoardSharesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  picture?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  googleId?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  todos?: Prisma.TodoUpdateManyWithoutUserNestedInput
+  ownedBoardShares?: Prisma.BoardShareUpdateManyWithoutOwnerNestedInput
+}
+
+export type UserUncheckedUpdateWithoutReceivedBoardSharesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  picture?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  googleId?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  todos?: Prisma.TodoUncheckedUpdateManyWithoutUserNestedInput
+  ownedBoardShares?: Prisma.BoardShareUncheckedUpdateManyWithoutOwnerNestedInput
 }
 
 
@@ -476,10 +662,14 @@ export type UserUncheckedUpdateWithoutTodosInput = {
 
 export type UserCountOutputType = {
   todos: number
+  ownedBoardShares: number
+  receivedBoardShares: number
 }
 
 export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   todos?: boolean | UserCountOutputTypeCountTodosArgs
+  ownedBoardShares?: boolean | UserCountOutputTypeCountOwnedBoardSharesArgs
+  receivedBoardShares?: boolean | UserCountOutputTypeCountReceivedBoardSharesArgs
 }
 
 /**
@@ -499,6 +689,20 @@ export type UserCountOutputTypeCountTodosArgs<ExtArgs extends runtime.Types.Exte
   where?: Prisma.TodoWhereInput
 }
 
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountOwnedBoardSharesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.BoardShareWhereInput
+}
+
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountReceivedBoardSharesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.BoardShareWhereInput
+}
+
 
 export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -510,6 +714,8 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   createdAt?: boolean
   updatedAt?: boolean
   todos?: boolean | Prisma.User$todosArgs<ExtArgs>
+  ownedBoardShares?: boolean | Prisma.User$ownedBoardSharesArgs<ExtArgs>
+  receivedBoardShares?: boolean | Prisma.User$receivedBoardSharesArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
 
@@ -549,6 +755,8 @@ export type UserSelectScalar = {
 export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "name" | "picture" | "googleId" | "role" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   todos?: boolean | Prisma.User$todosArgs<ExtArgs>
+  ownedBoardShares?: boolean | Prisma.User$ownedBoardSharesArgs<ExtArgs>
+  receivedBoardShares?: boolean | Prisma.User$receivedBoardSharesArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type UserIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -558,6 +766,8 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   name: "User"
   objects: {
     todos: Prisma.$TodoPayload<ExtArgs>[]
+    ownedBoardShares: Prisma.$BoardSharePayload<ExtArgs>[]
+    receivedBoardShares: Prisma.$BoardSharePayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -963,6 +1173,8 @@ readonly fields: UserFieldRefs;
 export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   todos<T extends Prisma.User$todosArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$todosArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$TodoPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  ownedBoardShares<T extends Prisma.User$ownedBoardSharesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$ownedBoardSharesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$BoardSharePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  receivedBoardShares<T extends Prisma.User$receivedBoardSharesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$receivedBoardSharesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$BoardSharePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1409,6 +1621,54 @@ export type User$todosArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs
   take?: number
   skip?: number
   distinct?: Prisma.TodoScalarFieldEnum | Prisma.TodoScalarFieldEnum[]
+}
+
+/**
+ * User.ownedBoardShares
+ */
+export type User$ownedBoardSharesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the BoardShare
+   */
+  select?: Prisma.BoardShareSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the BoardShare
+   */
+  omit?: Prisma.BoardShareOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.BoardShareInclude<ExtArgs> | null
+  where?: Prisma.BoardShareWhereInput
+  orderBy?: Prisma.BoardShareOrderByWithRelationInput | Prisma.BoardShareOrderByWithRelationInput[]
+  cursor?: Prisma.BoardShareWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.BoardShareScalarFieldEnum | Prisma.BoardShareScalarFieldEnum[]
+}
+
+/**
+ * User.receivedBoardShares
+ */
+export type User$receivedBoardSharesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the BoardShare
+   */
+  select?: Prisma.BoardShareSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the BoardShare
+   */
+  omit?: Prisma.BoardShareOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.BoardShareInclude<ExtArgs> | null
+  where?: Prisma.BoardShareWhereInput
+  orderBy?: Prisma.BoardShareOrderByWithRelationInput | Prisma.BoardShareOrderByWithRelationInput[]
+  cursor?: Prisma.BoardShareWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.BoardShareScalarFieldEnum | Prisma.BoardShareScalarFieldEnum[]
 }
 
 /**

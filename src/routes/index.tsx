@@ -11,8 +11,12 @@ import {
   createTodo,
   deleteTodo,
   deleteTodos,
+  getBoardSharing,
   getCurrentUser,
   getTodoDashboard,
+  inviteToBoardAction,
+  respondToBoardInvitationAction,
+  revokeBoardShareAction,
   updateTodos,
   updateTodo,
 } from '../server/todo.server'
@@ -27,16 +31,19 @@ export const Route = createFileRoute('/')({
     status: z.enum(['all', 'open', 'completed']).catch('all'),
     search: z.string().catch(''),
     period: z.enum(['7d', '30d']).catch('7d'),
+    board: z.string().min(1).optional(),
   }).partial({
     page: true,
     status: true,
     search: true,
     period: true,
+    board: true,
   }).transform((search) => ({
     page: search.page ?? 1,
     status: search.status ?? 'all',
     search: search.search ?? '',
     period: search.period ?? '7d',
+    board: search.board,
   })),
   loaderDeps: ({ search }) => search,
   component: Home,
@@ -47,14 +54,18 @@ export const Route = createFileRoute('/')({
       throw redirect({ to: '/login', search: { error: undefined } })
     }
 
-    const dashboard = await getTodoDashboard({
-      data: {
-        page: deps.page,
-        status: deps.status,
-        search: deps.search,
-        period: deps.period,
-      },
-    })
+    const [dashboard, sharing] = await Promise.all([
+      getTodoDashboard({
+        data: {
+          page: deps.page,
+          status: deps.status,
+          search: deps.search,
+          period: deps.period,
+          boardOwnerId: deps.board,
+        },
+      }),
+      getBoardSharing(),
+    ])
 
     if (dashboard.pagination.page !== deps.page) {
       throw redirect({
@@ -63,17 +74,21 @@ export const Route = createFileRoute('/')({
       })
     }
 
-    return { user, dashboard }
+    return { user, dashboard, sharing }
   },
 })
 
 function Home() {
   const router = useRouter()
   const navigate = useNavigate({ from: '/' })
-  const { user, dashboard } = Route.useLoaderData()
+  const { user, dashboard, sharing } = Route.useLoaderData()
   const query = Route.useSearch()
   const { todos, summary, activity, pagination } = dashboard
   const filter = query.status as TodoFilter
+  const isSharedBoard = Boolean(query.board)
+  const selectedBoard = isSharedBoard
+    ? sharing.sharedBoards.find((share) => share.user.id === query.board)?.user
+    : undefined
   const [search, setSearch] = useState('')
   const [newTitle, setNewTitle] = useState('')
   const [mutationError, setMutationError] = useState('')
@@ -84,6 +99,10 @@ function Home() {
   const [isHydrated, setIsHydrated] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editingTitle, setEditingTitle] = useState('')
+  const [inviteEmail, setInviteEmail] = useState('')
+  const [sharingError, setSharingError] = useState('')
+  const [sharingMessage, setSharingMessage] = useState('')
+  const [sharingBusy, setSharingBusy] = useState(false)
   const completionRate = summary.allCount
     ? Math.round((summary.completedCount / summary.allCount) * 100)
     : 0
@@ -255,6 +274,63 @@ function Home() {
     }
   }
 
+  async function handleInvite(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+
+    if (!inviteEmail.trim() || sharingBusy) {
+      return
+    }
+
+    setSharingBusy(true)
+    setSharingError('')
+    setSharingMessage('')
+
+    try {
+      await inviteToBoardAction({ data: { email: inviteEmail.trim() } })
+      setInviteEmail('')
+      setSharingMessage('Invitation sent.')
+      await router.invalidate()
+    } catch (error) {
+      setSharingError(
+        error instanceof Error ? error.message : 'Could not send the invitation.',
+      )
+    } finally {
+      setSharingBusy(false)
+    }
+  }
+
+  async function handleInvitationResponse(id: string, status: 'ACCEPTED' | 'DECLINED') {
+    setSharingBusy(true)
+    setSharingError('')
+    setSharingMessage('')
+
+    try {
+      await respondToBoardInvitationAction({ data: { id, status } })
+      setSharingMessage(status === 'ACCEPTED' ? 'Board access accepted.' : 'Invitation declined.')
+      await router.invalidate()
+    } catch {
+      setSharingError('Could not update the invitation. Please try again.')
+    } finally {
+      setSharingBusy(false)
+    }
+  }
+
+  async function handleRevokeShare(id: string) {
+    setSharingBusy(true)
+    setSharingError('')
+    setSharingMessage('')
+
+    try {
+      await revokeBoardShareAction({ data: { id } })
+      setSharingMessage('Board access removed.')
+      await router.invalidate()
+    } catch {
+      setSharingError('Could not remove board access. Please try again.')
+    } finally {
+      setSharingBusy(false)
+    }
+  }
+
   return (
     <div className="app-shell">
       <a className="skip-link" href="#tasks">Skip to tasks</a>
@@ -298,16 +374,42 @@ function Home() {
       <main className="main-content">
         <header className="topbar">
           <p>Workspace <span>/</span> Overview</p>
-          <div className="demo-indicator"><span /> Your workspace</div>
+          <label className="board-switcher">
+            <span className="visually-hidden">Choose a board</span>
+            <select
+              aria-label="Choose a board"
+              onChange={(event) => {
+                const board = event.currentTarget.value || undefined
+                setSelectedTodoIds(new Set())
+                void navigate({
+                  search: (previous) => ({
+                    ...previous,
+                    board,
+                    page: 1,
+                  }),
+                })
+              }}
+              value={query.board ?? ''}
+            >
+              <option value="">My board</option>
+              {sharing.sharedBoards.map((share) => (
+                <option key={share.id} value={share.user.id}>
+                  {share.user.name ?? share.user.email}'s board
+                </option>
+              ))}
+            </select>
+          </label>
         </header>
 
         <div className="dashboard-content">
           <section className="welcome-row" id="overview">
             <div>
-              <p className="eyebrow">PERSONAL WORKSPACE</p>
-              <h1>Good work starts here.</h1>
+              <p className="eyebrow">{isSharedBoard ? 'SHARED WORKSPACE' : 'PERSONAL WORKSPACE'}</p>
+              <h1>{isSharedBoard ? `${selectedBoard?.name ?? selectedBoard?.email ?? 'Shared'}'s board` : 'Good work starts here.'}</h1>
               <p className="welcome-copy">
-                A clear view of your tasks and the progress you have made.
+                {isSharedBoard
+                  ? 'You have read-only access to this board.'
+                  : 'A clear view of your tasks and the progress you have made.'}
               </p>
             </div>
             <label className="date-chip">
@@ -325,6 +427,90 @@ function Home() {
                 <option value="30d">Last 30 days</option>
               </select>
             </label>
+          </section>
+
+          <section className="panel sharing-panel" aria-label="Board sharing">
+            <div className="panel-heading">
+              <div>
+                <h2>{isSharedBoard ? 'Shared board' : 'Share your board'}</h2>
+                <p>
+                  {isSharedBoard
+                    ? `Shared by ${selectedBoard?.name ?? selectedBoard?.email ?? 'another user'} · read-only access`
+                    : 'Invite another user to view your tasks.'}
+                </p>
+              </div>
+            </div>
+            {!isSharedBoard && (
+              <>
+                <form className="sharing-form" onSubmit={handleInvite}>
+                  <label className="visually-hidden" htmlFor="share-email">
+                    Invite by email
+                  </label>
+                  <input
+                    autoComplete="email"
+                    id="share-email"
+                    maxLength={254}
+                    onChange={(event) => setInviteEmail(event.currentTarget.value)}
+                    placeholder="Email address"
+                    type="email"
+                    value={inviteEmail}
+                  />
+                  <button disabled={!inviteEmail.trim() || sharingBusy} type="submit">
+                    {sharingBusy ? 'Sending…' : 'Send invitation'}
+                  </button>
+                </form>
+                {sharingError && <p className="sharing-error" role="alert">{sharingError}</p>}
+                {sharingMessage && <p className="sharing-message" role="status">{sharingMessage}</p>}
+                {sharing.sentInvitations.length > 0 && (
+                  <div className="sharing-list">
+                    <h3>People with access or invited</h3>
+                    {sharing.sentInvitations.map((share) => (
+                      <div className="sharing-item" key={share.id}>
+                        <span>{share.user.name ?? share.user.email}</span>
+                        <span className={`share-status ${share.status.toLowerCase()}`}>
+                          {share.status.toLowerCase()}
+                        </span>
+                        {share.status === 'ACCEPTED' && (
+                          <button
+                            disabled={sharingBusy}
+                            onClick={() => void handleRevokeShare(share.id)}
+                            type="button"
+                          >
+                            Remove access
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+            {sharing.receivedInvitations.length > 0 && (
+              <div className="sharing-list">
+                <h3>Board invitations</h3>
+                {sharing.receivedInvitations.map((share) => (
+                  <div className="sharing-item" key={share.id}>
+                    <span>{share.user.name ?? share.user.email} invited you to view their board</span>
+                    <span className="sharing-item-actions">
+                      <button
+                        disabled={sharingBusy}
+                        onClick={() => void handleInvitationResponse(share.id, 'ACCEPTED')}
+                        type="button"
+                      >
+                        Accept
+                      </button>
+                      <button
+                        disabled={sharingBusy}
+                        onClick={() => void handleInvitationResponse(share.id, 'DECLINED')}
+                        type="button"
+                      >
+                        Decline
+                      </button>
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
           </section>
 
           <section className="metrics-grid" aria-label="Task summary">
@@ -434,8 +620,8 @@ function Home() {
           <section className="panel tasks-panel" id="tasks">
             <div className="tasks-heading">
               <div>
-                <h2>Your tasks</h2>
-                <p>Stay focused on what matters next.</p>
+                <h2>{isSharedBoard ? 'Shared tasks' : 'Your tasks'}</h2>
+                <p>{isSharedBoard ? 'These tasks are visible to you but cannot be changed.' : 'Stay focused on what matters next.'}</p>
               </div>
               <form className="search-box" onSubmit={handleSearch}>
                 <span aria-hidden="true">⌕</span>
@@ -464,7 +650,7 @@ function Home() {
                 <button type="submit" className="search-submit">Search</button>
               </form>
             </div>
-            <form className="todo-form" onSubmit={handleCreateTodo}>
+            {!isSharedBoard && <form className="todo-form" onSubmit={handleCreateTodo}>
               <label className="visually-hidden" htmlFor="new-todo-title">
                 New task
               </label>
@@ -478,7 +664,7 @@ function Home() {
               <button disabled={!newTitle.trim() || isSaving} type="submit">
                 {isSaving ? 'Saving…' : 'Add task'}
               </button>
-            </form>
+            </form>}
             {mutationError && <p className="todo-error" role="alert">{mutationError}</p>}
             <div className="task-tabs" role="group" aria-label="Filter tasks">
               {([
@@ -497,7 +683,7 @@ function Home() {
                 </button>
               ))}
             </div>
-            <div className="bulk-actions">
+            {!isSharedBoard && <div className="bulk-actions">
               <label>
                 <input
                   aria-label="Select all tasks on this page"
@@ -540,12 +726,13 @@ function Home() {
                   </button>
                 </div>
               )}
-            </div>
+            </div>}
             <ul className="task-list">
               {todos.map((todo) => (
                 <TaskRow
                   key={todo.id}
                   todo={todo}
+                  readOnly={isSharedBoard}
                   isSelected={selectedTodoIds.has(todo.id)}
                   isSelectionDisabled={!isHydrated}
                   isEditing={editingId === todo.id}

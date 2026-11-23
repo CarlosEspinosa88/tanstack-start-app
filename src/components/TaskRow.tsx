@@ -9,6 +9,7 @@ export type TaskRowTodo = {
 
 type TaskRowProps = {
   todo: TaskRowTodo
+  readOnly?: boolean
   isSelected: boolean
   isSelectionDisabled: boolean
   isEditing: boolean
@@ -25,6 +26,7 @@ type TaskRowProps = {
 
 export function TaskRow({
   todo,
+  readOnly = false,
   isSelected,
   isSelectionDisabled,
   isEditing,
@@ -52,24 +54,36 @@ export function TaskRow({
 
   return (
     <li className="task-row" aria-busy={isPending}>
-      <input
-        aria-label={`Select task: ${todo.title}`}
-        checked={isSelected}
-        className="task-select"
-        disabled={isPending || isSelectionDisabled}
-        onChange={onSelect}
-        type="checkbox"
-      />
-      <button
-        aria-label={`${todo.done ? 'Mark incomplete' : 'Mark complete'}: ${todo.title}`}
-        className={todo.done ? 'task-check checked' : 'task-check'}
-        disabled={isPending}
-        onClick={onToggle}
-        type="button"
-      >
-        {todo.done ? '✓' : ''}
-      </button>
-      {isEditing ? (
+      {!readOnly && (
+        <input
+          aria-label={`Select task: ${todo.title}`}
+          checked={isSelected}
+          className="task-select"
+          disabled={isPending || isSelectionDisabled}
+          onChange={onSelect}
+          type="checkbox"
+        />
+      )}
+      {readOnly ? (
+        <span
+          aria-label={todo.done ? 'Completed' : 'In progress'}
+          className={todo.done ? 'task-check checked' : 'task-check'}
+          role="img"
+        >
+          {todo.done ? '✓' : ''}
+        </span>
+      ) : (
+        <button
+          aria-label={`${todo.done ? 'Mark incomplete' : 'Mark complete'}: ${todo.title}`}
+          className={todo.done ? 'task-check checked' : 'task-check'}
+          disabled={isPending}
+          onClick={onToggle}
+          type="button"
+        >
+          {todo.done ? '✓' : ''}
+        </button>
+      )}
+      {isEditing && !readOnly ? (
         <input
           autoFocus
           className="task-edit-input"
@@ -94,7 +108,7 @@ export function TaskRow({
           day: 'numeric',
         })}
       </time>
-      {isEditing ? (
+      {!readOnly && isEditing ? (
         <span className="task-actions">
           <button
             disabled={!editTitle.trim() || isPending}
@@ -107,7 +121,7 @@ export function TaskRow({
             Cancel
           </button>
         </span>
-      ) : (
+      ) : !readOnly ? (
         <span className="task-actions">
           <button disabled={isPending} onClick={onStartEdit} type="button">
             Edit
@@ -116,7 +130,7 @@ export function TaskRow({
             Delete
           </button>
         </span>
-      )}
+      ) : null}
     </li>
   )
 }

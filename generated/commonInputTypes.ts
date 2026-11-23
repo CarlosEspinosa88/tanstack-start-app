@@ -123,6 +123,23 @@ export type BoolWithAggregatesFilter<$PrismaModel = never> = {
   _max?: Prisma.NestedBoolFilter<$PrismaModel>
 }
 
+export type EnumBoardShareStatusFilter<$PrismaModel = never> = {
+  equals?: $Enums.BoardShareStatus | Prisma.EnumBoardShareStatusFieldRefInput<$PrismaModel>
+  in?: $Enums.BoardShareStatus[] | Prisma.ListEnumBoardShareStatusFieldRefInput<$PrismaModel>
+  notIn?: $Enums.BoardShareStatus[] | Prisma.ListEnumBoardShareStatusFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumBoardShareStatusFilter<$PrismaModel> | $Enums.BoardShareStatus
+}
+
+export type EnumBoardShareStatusWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.BoardShareStatus | Prisma.EnumBoardShareStatusFieldRefInput<$PrismaModel>
+  in?: $Enums.BoardShareStatus[] | Prisma.ListEnumBoardShareStatusFieldRefInput<$PrismaModel>
+  notIn?: $Enums.BoardShareStatus[] | Prisma.ListEnumBoardShareStatusFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumBoardShareStatusWithAggregatesFilter<$PrismaModel> | $Enums.BoardShareStatus
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumBoardShareStatusFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumBoardShareStatusFilter<$PrismaModel>
+}
+
 export type NestedStringFilter<$PrismaModel = never> = {
   equals?: string | Prisma.StringFieldRefInput<$PrismaModel>
   in?: string[] | Prisma.ListStringFieldRefInput<$PrismaModel>
@@ -243,6 +260,23 @@ export type NestedBoolWithAggregatesFilter<$PrismaModel = never> = {
   _count?: Prisma.NestedIntFilter<$PrismaModel>
   _min?: Prisma.NestedBoolFilter<$PrismaModel>
   _max?: Prisma.NestedBoolFilter<$PrismaModel>
+}
+
+export type NestedEnumBoardShareStatusFilter<$PrismaModel = never> = {
+  equals?: $Enums.BoardShareStatus | Prisma.EnumBoardShareStatusFieldRefInput<$PrismaModel>
+  in?: $Enums.BoardShareStatus[] | Prisma.ListEnumBoardShareStatusFieldRefInput<$PrismaModel>
+  notIn?: $Enums.BoardShareStatus[] | Prisma.ListEnumBoardShareStatusFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumBoardShareStatusFilter<$PrismaModel> | $Enums.BoardShareStatus
+}
+
+export type NestedEnumBoardShareStatusWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.BoardShareStatus | Prisma.EnumBoardShareStatusFieldRefInput<$PrismaModel>
+  in?: $Enums.BoardShareStatus[] | Prisma.ListEnumBoardShareStatusFieldRefInput<$PrismaModel>
+  notIn?: $Enums.BoardShareStatus[] | Prisma.ListEnumBoardShareStatusFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumBoardShareStatusWithAggregatesFilter<$PrismaModel> | $Enums.BoardShareStatus
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumBoardShareStatusFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumBoardShareStatusFilter<$PrismaModel>
 }
 
 

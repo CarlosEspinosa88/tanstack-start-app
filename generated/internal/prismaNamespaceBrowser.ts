@@ -50,7 +50,8 @@ export const AnyNull = runtime.objectEnumValues.instances.AnyNull
 
 export const ModelName = {
   User: 'User',
-  Todo: 'Todo'
+  Todo: 'Todo',
+  BoardShare: 'BoardShare'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -92,6 +93,18 @@ export const TodoScalarFieldEnum = {
 } as const
 
 export type TodoScalarFieldEnum = (typeof TodoScalarFieldEnum)[keyof typeof TodoScalarFieldEnum]
+
+
+export const BoardShareScalarFieldEnum = {
+  id: 'id',
+  ownerId: 'ownerId',
+  recipientId: 'recipientId',
+  status: 'status',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type BoardShareScalarFieldEnum = (typeof BoardShareScalarFieldEnum)[keyof typeof BoardShareScalarFieldEnum]
 
 
 export const SortOrder = {

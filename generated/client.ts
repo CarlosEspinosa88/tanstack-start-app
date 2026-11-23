@@ -54,3 +54,8 @@ export type User = Prisma.UserModel
  * 
  */
 export type Todo = Prisma.TodoModel
+/**
+ * Model BoardShare
+ * 
+ */
+export type BoardShare = Prisma.BoardShareModel

@@ -21,6 +21,7 @@ export const TodoListInput = z.object({
   status: z.enum(['all', 'open', 'completed']).default('all'),
   search: z.string().trim().max(140).default(''),
   period: z.enum(['7d', '30d']).default('7d'),
+  boardOwnerId: z.string().min(1).optional(),
 })
 
 const TodoIds = z.array(z.string().min(1)).min(1).max(20).refine(

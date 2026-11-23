@@ -10,4 +10,5 @@
  */
 export type * from './models/User'
 export type * from './models/Todo'
+export type * from './models/BoardShare'
 export type * from './commonInputTypes'

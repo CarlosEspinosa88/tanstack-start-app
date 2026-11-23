@@ -64,8 +64,7 @@ button:focus-visible, input:focus-visible, a:focus-visible {
 .topbar { display: flex; height: 68px; align-items: center; justify-content: space-between; padding: 0 42px; border-bottom: 1px solid #eeedf4; background: #fff; }
 .topbar p { margin: 0; color: #77768c; font-size: 12px; }
 .topbar p span { padding: 0 8px; color: #c1c0cc; }
-.demo-indicator { display: flex; align-items: center; gap: 7px; color: #77768c; font-size: 11px; }
-.demo-indicator span { width: 7px; height: 7px; border-radius: 50%; background: #39bd88; }
+.board-switcher select { max-width: 240px; padding: 7px 10px; border: 1px solid #eae9f1; border-radius: 8px; color: #6e6d80; background: #fff; font: inherit; font-size: 11px; cursor: pointer; }
 .dashboard-content { width: min(1120px, 100%); margin: 0 auto; padding: 37px 42px 25px; }
 .welcome-row { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 24px; }
 .eyebrow { margin: 0 0 8px; color: #8d7bd0; font-size: 10px; font-weight: 700; letter-spacing: 1px; }
@@ -90,6 +89,22 @@ h1 { margin-bottom: 7px; font: 700 25px Inter, ui-sans-serif, sans-serif; letter
 .progress-track span { display: block; height: 100%; border-radius: inherit; background: #7d62e4; transition: width .2s ease; }
 .insights-grid { display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(250px, 1fr); gap: 16px; margin-bottom: 16px; }
 .panel { padding: 19px 20px; }
+.sharing-panel { margin-bottom: 16px; }
+.sharing-form { display: flex; gap: 8px; margin-top: 15px; }
+.sharing-form input { min-width: 0; flex: 1; padding: 9px 11px; border: 1px solid #eeedf4; border-radius: 7px; color: #4a495d; font-size: 11px; }
+.sharing-form button, .sharing-item-actions button, .sharing-item > button { padding: 7px 10px; border: 0; border-radius: 6px; color: #6e52d5; background: #f3f0ff; cursor: pointer; font-size: 10px; font-weight: 600; }
+.sharing-form button:disabled, .sharing-item button:disabled { cursor: not-allowed; opacity: .55; }
+.sharing-error, .sharing-message { margin: 9px 0 0; font-size: 10px; }
+.sharing-error { color: #a33636; }
+.sharing-message { color: #318263; }
+.sharing-list { margin-top: 15px; }
+.sharing-list h3 { margin: 0 0 7px; color: #77768c; font-size: 10px; font-weight: 600; }
+.sharing-item { display: flex; min-height: 38px; align-items: center; gap: 10px; border-top: 1px solid #f1f0f5; color: #5e5d70; font-size: 10px; }
+.sharing-item > span:first-child { flex: 1; }
+.sharing-item-actions { display: flex; gap: 6px; }
+.share-status { padding: 4px 7px; border-radius: 10px; color: #77768c; background: #f3f2f7; font-size: 9px; text-transform: capitalize; }
+.share-status.accepted { color: #318263; background: #e9f8f2; }
+.share-status.pending { color: #a36a24; background: #fff4e8; }
 .panel-heading, .tasks-heading { display: flex; align-items: flex-start; justify-content: space-between; }
 .panel h2, .tasks-heading h2 { margin: 0 0 5px; font: 700 14px Inter, ui-sans-serif, sans-serif; letter-spacing: -.2px; }
 .panel-heading p, .tasks-heading p { margin: 0; color: #9998a8; font-size: 10px; }
@@ -234,6 +249,7 @@ h1 { margin-bottom: 7px; font: 700 25px Inter, ui-sans-serif, sans-serif; letter
   }
   .main-content { margin-left: 0; }
   .topbar { height: 50px; padding: 0 18px; }
+  .board-switcher select { max-width: 175px; padding: 6px 7px; font-size: 10px; }
   .dashboard-content { padding: 27px 18px 20px; }
   .insights-grid { grid-template-columns: 1fr; }
   .login-page { grid-template-columns: 1fr; }
@@ -253,6 +269,8 @@ h1 { margin-bottom: 7px; font: 700 25px Inter, ui-sans-serif, sans-serif; letter
   .metric-card { min-height: 120px; padding: 13px; }
   .metric-heading { font-size: 10px; }
   .tasks-panel { padding-right: 13px; padding-left: 13px; }
+  .sharing-item { align-items: flex-start; flex-wrap: wrap; padding: 8px 0; }
+  .sharing-item > span:first-child { flex-basis: 100%; }
   .tasks-heading { align-items: flex-start; gap: 10px; }
   .search-box { width: 150px; }
   .task-tabs { gap: 13px; }
