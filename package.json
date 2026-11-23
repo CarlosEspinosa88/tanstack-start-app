@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite dev",
     "prebuild": "DATABASE_URL=${DATABASE_URL:-postgresql://localhost:5432/placeholder?schema=public} prisma generate",
-    "build": "vite build",
+    "build": "if [ \"$VERCEL_ENV\" = \"production\" ]; then npm run prisma:deploy; fi && vite build",
     "preview": "vite preview",
     "test": "tsx --test src/server/*.test.ts src/components/*.test.ts",
     "test:e2e": "playwright test",

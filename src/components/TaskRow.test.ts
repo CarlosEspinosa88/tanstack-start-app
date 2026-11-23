@@ -4,7 +4,7 @@ import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { TaskRow } from './TaskRow'
 
-function renderTaskRow(isPending: boolean) {
+function renderTaskRow(isPending: boolean, readOnly = false) {
   return renderToStaticMarkup(
     createElement(TaskRow, {
       todo: {
@@ -13,6 +13,7 @@ function renderTaskRow(isPending: boolean) {
         done: false,
         createdAt: new Date('2026-11-19T12:00:00.000Z'),
       },
+      readOnly,
       isSelected: true,
       isSelectionDisabled: false,
       isEditing: false,
@@ -44,4 +45,14 @@ test('task controls are marked busy and disabled during mutations', () => {
   assert.match(markup, /aria-busy="true"/)
   assert.match(markup, /aria-label="Select task: Review release"[^>]*disabled=""/)
   assert.match(markup, /aria-label="Mark complete: Review release"[^>]*disabled=""/)
+})
+
+test('shared task rows show status without edit or selection controls', () => {
+  const markup = renderTaskRow(false, true)
+
+  assert.match(markup, /aria-label="In progress"[^>]*role="img"/)
+  assert.doesNotMatch(markup, /Select task: Review release/)
+  assert.doesNotMatch(markup, /Mark complete: Review release/)
+  assert.doesNotMatch(markup, />Edit</)
+  assert.doesNotMatch(markup, />Delete</)
 })

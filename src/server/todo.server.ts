@@ -16,6 +16,19 @@ import {
   UpdateTodosInput,
   UpdateTodoInput,
 } from './todo.validation'
+import {
+  InviteToBoardInput,
+  RespondToBoardInvitationInput,
+  RevokeBoardShareInput,
+} from './board-sharing.validation'
+import {
+  getBoardSharingData,
+  ensureBoardViewAccess,
+  inviteToBoard,
+  respondToBoardInvitation,
+  revokeBoardShare,
+} from './board-sharing'
+import { createBoardSharingRepository } from './board-sharing-prisma-repository'
 
 async function getRequestUser() {
   const [{ getRequest }, { getUserFromRequest }] = await Promise.all([
@@ -45,7 +58,67 @@ export const getTodoDashboard = createServerFn({ method: 'GET' })
   .handler(async ({ data }) => {
     const user = await requireRequestUser()
     const { prisma } = await import('./db')
-    return getTodoDashboardData(createTodoRepository(prisma), user.id, data)
+    const boardOwnerId = data.boardOwnerId ?? user.id
+
+    await ensureBoardViewAccess(
+      createBoardSharingRepository(prisma),
+      boardOwnerId,
+      user.id,
+    )
+
+    const { boardOwnerId: _boardOwnerId, ...options } = data
+    return getTodoDashboardData(
+      createTodoRepository(prisma),
+      boardOwnerId,
+      options,
+    )
+  })
+
+export const getBoardSharing = createServerFn({ method: 'GET' }).handler(
+  async () => {
+    const user = await requireRequestUser()
+    const { prisma } = await import('./db')
+    return getBoardSharingData(createBoardSharingRepository(prisma), user.id)
+  },
+)
+
+export const inviteToBoardAction = createServerFn({ method: 'POST' })
+  .inputValidator(InviteToBoardInput)
+  .handler(async ({ data }) => {
+    const user = await requireRequestUser()
+    const { prisma } = await import('./db')
+    return inviteToBoard(
+      createBoardSharingRepository(prisma),
+      user.id,
+      data.email,
+    )
+  })
+
+export const respondToBoardInvitationAction = createServerFn({
+  method: 'POST',
+})
+  .inputValidator(RespondToBoardInvitationInput)
+  .handler(async ({ data }) => {
+    const user = await requireRequestUser()
+    const { prisma } = await import('./db')
+    return respondToBoardInvitation(
+      createBoardSharingRepository(prisma),
+      user.id,
+      data.id,
+      data.status,
+    )
+  })
+
+export const revokeBoardShareAction = createServerFn({ method: 'POST' })
+  .inputValidator(RevokeBoardShareInput)
+  .handler(async ({ data }) => {
+    const user = await requireRequestUser()
+    const { prisma } = await import('./db')
+    return revokeBoardShare(
+      createBoardSharingRepository(prisma),
+      user.id,
+      data.id,
+    )
   })
 
 export const createTodo = createServerFn({ method: 'POST' })

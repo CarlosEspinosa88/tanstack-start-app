@@ -391,7 +391,8 @@ type FieldRefInputType<Model, FieldType> = Model extends never ? never : FieldRe
 
 export const ModelName = {
   User: 'User',
-  Todo: 'Todo'
+  Todo: 'Todo',
+  BoardShare: 'BoardShare'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -407,7 +408,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "todo"
+    modelProps: "user" | "todo" | "boardShare"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -559,6 +560,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    BoardShare: {
+      payload: Prisma.$BoardSharePayload<ExtArgs>
+      fields: Prisma.BoardShareFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.BoardShareFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BoardSharePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.BoardShareFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BoardSharePayload>
+        }
+        findFirst: {
+          args: Prisma.BoardShareFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BoardSharePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.BoardShareFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BoardSharePayload>
+        }
+        findMany: {
+          args: Prisma.BoardShareFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BoardSharePayload>[]
+        }
+        create: {
+          args: Prisma.BoardShareCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BoardSharePayload>
+        }
+        createMany: {
+          args: Prisma.BoardShareCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.BoardShareCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BoardSharePayload>[]
+        }
+        delete: {
+          args: Prisma.BoardShareDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BoardSharePayload>
+        }
+        update: {
+          args: Prisma.BoardShareUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BoardSharePayload>
+        }
+        deleteMany: {
+          args: Prisma.BoardShareDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.BoardShareUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.BoardShareUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BoardSharePayload>[]
+        }
+        upsert: {
+          args: Prisma.BoardShareUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BoardSharePayload>
+        }
+        aggregate: {
+          args: Prisma.BoardShareAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateBoardShare>
+        }
+        groupBy: {
+          args: Prisma.BoardShareGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.BoardShareGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.BoardShareCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.BoardShareCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -623,6 +698,18 @@ export const TodoScalarFieldEnum = {
 export type TodoScalarFieldEnum = (typeof TodoScalarFieldEnum)[keyof typeof TodoScalarFieldEnum]
 
 
+export const BoardShareScalarFieldEnum = {
+  id: 'id',
+  ownerId: 'ownerId',
+  recipientId: 'recipientId',
+  status: 'status',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type BoardShareScalarFieldEnum = (typeof BoardShareScalarFieldEnum)[keyof typeof BoardShareScalarFieldEnum]
+
+
 export const SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -685,6 +772,20 @@ export type ListDateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaM
  * Reference to a field of type 'Boolean'
  */
 export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
+    
+
+
+/**
+ * Reference to a field of type 'BoardShareStatus'
+ */
+export type EnumBoardShareStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'BoardShareStatus'>
+    
+
+
+/**
+ * Reference to a field of type 'BoardShareStatus[]'
+ */
+export type ListEnumBoardShareStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'BoardShareStatus[]'>
     
 
 
@@ -790,6 +891,7 @@ export interface PrismaClientOptions {
 export type GlobalOmitConfig = {
   user?: Prisma.UserOmit
   todo?: Prisma.TodoOmit
+  boardShare?: Prisma.BoardShareOmit
 }
 
 /* Types for Logging */

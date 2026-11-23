@@ -29,8 +29,16 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   todos Todo[]
+  ownedBoardShares BoardShare[] @relation("OwnedBoardShares")
+  receivedBoardShares BoardShare[] @relation("ReceivedBoardShares")
 }
 
+enum BoardShareStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  REVOKED
+}
 
 model Todo {
   id String @id @default(cuid())
@@ -41,4 +49,19 @@ model Todo {
   userId String
 
   @@index([userId, createdAt, id])
+}
+
+model BoardShare {
+  id String @id @default(cuid())
+  ownerId String
+  recipientId String
+  status BoardShareStatus @default(PENDING)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  owner User @relation("OwnedBoardShares", fields: [ownerId], references: [id], onDelete: Cascade)
+  recipient User @relation("ReceivedBoardShares", fields: [recipientId], references: [id], onDelete: Cascade)
+
+  @@unique([ownerId, recipientId])
+  @@index([recipientId, status])
+  @@index([ownerId, status])
 }
