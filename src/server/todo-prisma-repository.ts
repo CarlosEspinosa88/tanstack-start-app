@@ -22,8 +22,8 @@ export function createTodoRepository(prisma: PrismaClient): TodoRepository {
 
       return todos.map((todo) => todo.createdAt)
     },
-    create: ({ title, userId }) =>
-      prisma.todo.create({ data: { title, userId } }),
+    create: ({ title, userId, dueDate }) =>
+      prisma.todo.create({ data: { title, userId, dueDate } }),
     updateOwned: async ({ id, userId, ...data }) => {
       const result = await prisma.todo.updateMany({
         where: { id, userId },

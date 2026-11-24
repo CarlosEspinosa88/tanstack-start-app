@@ -13,6 +13,7 @@
       "id": "demo-todo-01",
       "title": "Draft the product update",
       "done": false,
+      "dueDate": null,
       "createdAt": "2026-11-03T10:03:43Z",
       "userId": "demo-user"
     },
@@ -20,6 +21,7 @@
       "id": "demo-todo-02",
       "title": "Review the release checklist",
       "done": true,
+      "dueDate": null,
       "createdAt": "2026-11-03T10:03:43Z",
       "userId": "demo-user"
     },
@@ -27,6 +29,7 @@
       "id": "demo-todo-03",
       "title": "Fix the account settings form",
       "done": false,
+      "dueDate": null,
       "createdAt": "2026-11-02T10:03:43Z",
       "userId": "demo-user"
     },
@@ -34,6 +37,7 @@
       "id": "demo-todo-04",
       "title": "Read through user feedback",
       "done": true,
+      "dueDate": null,
       "createdAt": "2026-11-02T10:03:43Z",
       "userId": "demo-user"
     },
@@ -41,6 +45,7 @@
       "id": "demo-todo-05",
       "title": "Plan the next sprint",
       "done": false,
+      "dueDate": null,
       "createdAt": "2026-11-01T10:03:43Z",
       "userId": "demo-user"
     },
@@ -48,6 +53,7 @@
       "id": "demo-todo-06",
       "title": "Update onboarding copy",
       "done": false,
+      "dueDate": null,
       "createdAt": "2026-11-01T10:03:43Z",
       "userId": "demo-user"
     },
@@ -55,6 +61,7 @@
       "id": "demo-todo-07",
       "title": "Audit stale dependencies",
       "done": true,
+      "dueDate": null,
       "createdAt": "2026-10-31T10:03:43Z",
       "userId": "demo-user"
     },
@@ -62,6 +69,7 @@
       "id": "demo-todo-08",
       "title": "Share weekly progress",
       "done": true,
+      "dueDate": null,
       "createdAt": "2026-10-31T10:03:43Z",
       "userId": "demo-user"
     },
@@ -69,6 +77,7 @@
       "id": "demo-todo-09",
       "title": "Add keyboard shortcuts",
       "done": false,
+      "dueDate": null,
       "createdAt": "2026-10-30T10:03:43Z",
       "userId": "demo-user"
     },
@@ -76,6 +85,7 @@
       "id": "demo-todo-10",
       "title": "Prepare the demo workspace",
       "done": false,
+      "dueDate": null,
       "createdAt": "2026-10-29T10:03:43Z",
       "userId": "demo-user"
     },
@@ -83,6 +93,7 @@
       "id": "demo-todo-11",
       "title": "Verify the mobile layout",
       "done": false,
+      "dueDate": null,
       "createdAt": "2026-10-29T10:03:43Z",
       "userId": "demo-user"
     },
@@ -90,6 +101,7 @@
       "id": "demo-todo-12",
       "title": "Document API changes",
       "done": false,
+      "dueDate": null,
       "createdAt": "2026-10-28T10:03:43Z",
       "userId": "demo-user"
     }

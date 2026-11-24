@@ -33,10 +33,11 @@ def main() -> None:
                 "id": todo_id,
                 "title": title,
                 "done": done,
+                "dueDate": due_date.isoformat() if due_date is not None else None,
                 "createdAt": created_at,
                 "userId": user_id,
             }
-            for todo_id, title, done, created_at, user_id in rows
+            for todo_id, title, done, due_date, created_at, user_id in rows
         ],
     }
 

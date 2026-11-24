@@ -43,15 +43,19 @@ test(
       userIds.push(secondUser.id)
 
       const repository = createTodoRepository(prisma)
+      const dueDate = new Date('2026-12-01T00:00:00.000Z')
       const todo = await createOwnedTodo(
         repository,
         firstUser.id,
         'Integration task',
+        dueDate,
       )
+      assert.equal(todo.dueDate?.toISOString(), dueDate.toISOString())
       await updateOwnedTodo(repository, firstUser.id, {
         id: todo.id,
         title: 'Updated integration task',
         done: true,
+        dueDate: null,
       })
 
       const dashboard = await getTodoDashboardData(
@@ -63,6 +67,7 @@ test(
       assert.equal(dashboard.pagination.total, 1)
       assert.equal(dashboard.todos[0]?.id, todo.id)
       assert.equal(dashboard.todos[0]?.title, 'Updated integration task')
+      assert.equal(dashboard.todos[0]?.dueDate, null)
       assert.equal(dashboard.summary.allCount, 1)
       assert.equal(dashboard.summary.completedCount, 1)
 

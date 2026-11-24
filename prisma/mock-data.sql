@@ -17,6 +17,7 @@ SELECT
   'demo-todo-' || lpad(CAST(row_number() OVER (ORDER BY days_ago, title) AS VARCHAR), 2, '0') AS id,
   title,
   done,
+  NULL::DATE AS "dueDate",
   strftime(current_timestamp - days_ago * INTERVAL '1 day', '%Y-%m-%dT%H:%M:%SZ') AS "createdAt",
   'demo-user' AS "userId"
 FROM sample_todos

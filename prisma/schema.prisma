@@ -45,6 +45,7 @@ model Todo {
   title String
   done Boolean @default(false)
   createdAt DateTime @default(now())
+  dueDate DateTime? @db.Date
   user User @relation(fields: [userId], references: [id])
   userId String
 
