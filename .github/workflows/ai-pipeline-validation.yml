@@ -6,6 +6,11 @@ on:
     paths:
       - ".github/extensions/**"
       - ".github/agents/**"
+      - ".github/prompts/**"
+      - ".github/skills/**"
+      - ".github/copilot-instructions.md"
+      - ".github/README.md"
+      - "AGENTS.md"
       - ".github/contracts/**"
       - ".github/ISSUE_TEMPLATE/**"
       - "scripts/ai-pipeline/**"

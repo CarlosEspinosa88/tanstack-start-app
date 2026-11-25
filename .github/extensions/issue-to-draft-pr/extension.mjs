@@ -193,7 +193,7 @@ async function createWorkingBranch(issue) {
 
 async function workingTreePaths() {
   const status = await runText("git", ["status", "--porcelain", "--untracked-files=all"]);
-  return status.split("\n").filter(Boolean).map((line) => {
+  return status.split("\n").filter(Boolean).flatMap((line) => {
     const value = line.slice(3).trim();
     return value.includes(" -> ") ? value.split(" -> ") : [value];
   });
@@ -286,7 +286,7 @@ const issueToDraftPr = defineWorkflow({
         ),
         () => ctx.agent(
           `${context}\n\nAct as a read-only QA planner. Inspect existing Node tests, Prisma integration tests, Playwright configuration, npm scripts, and CI. Return a focused verification plan and any blockers. Do not edit or execute commands. Return JSON matching the requested schema.`,
-          { agent: "test-engineer", label: `issue-${issueNumber}-qa-plan`, schema: QA_PLAN_SCHEMA },
+          { agent: "qa-planner", label: `issue-${issueNumber}-qa-plan`, schema: QA_PLAN_SCHEMA },
         ),
       ]);
 
