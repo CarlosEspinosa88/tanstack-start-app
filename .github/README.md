@@ -36,3 +36,11 @@ The existing `engineering-reverse-review.agent.md` is intentionally retained. It
 - GitHub Actions enforce repository checks independently of an agent conversation.
 
 See the GitHub Copilot documentation for [custom instructions](https://docs.github.com/en/copilot/concepts/prompting-and-context/custom-instructions), [custom agents](https://docs.github.com/en/copilot/concepts/agents/about-custom-agents), [agent skills](https://docs.github.com/en/copilot/concepts/agents/agent-skills), [prompt files](https://docs.github.com/en/copilot/concepts/prompting-and-context/prompt-files), and [hooks](https://docs.github.com/en/copilot/concepts/customizations/hooks).
+
+## Multi-agent issue delivery
+
+The project extension at `.github/extensions/issue-to-draft-pr/` registers the approved-issue-to-Draft-PR Dynamic Workflow. Read its README before running it. The workflow requires a human-applied `ai:approved` label and must be started explicitly from an interactive Copilot CLI session with experimental features enabled.
+
+Daily review automation creates issues using the `AI finding` template and applies `ai:needs-approval` only. It must never approve its own findings. The workflow has strict risk/path gates, deterministic local checks, independent code/security review and creates Draft PRs only; merge/deploy remains a human action.
+
+Contracts live in `.github/contracts/agent-output-contracts.md`; policy helpers and tests are in `scripts/ai-pipeline/`. Bootstrap labels and validate the local environment using the instructions in the extension README.

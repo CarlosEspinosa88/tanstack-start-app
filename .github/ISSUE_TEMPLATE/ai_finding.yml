@@ -1,0 +1,66 @@
+name: Daily AI finding
+description: Evidence-based finding from the daily code intelligence review. Requires human approval before implementation.
+title: "[AI finding] "
+labels:
+  - ai:needs-approval
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This issue is a proposal, not authorization to change code. The daily automation must not add the `ai:approved` label. A human must review and approve it explicitly.
+  - type: input
+    id: summary
+    attributes:
+      label: Summary
+      description: One sentence describing the behavior or engineering problem.
+      placeholder: A user-visible or system-level problem
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: Exact paths, line references, call paths, reproducible observations and relevant tests. Redact secrets and personal data.
+      placeholder: "src/...:123 — observed behavior and supporting evidence"
+    validations:
+      required: true
+  - type: textarea
+    id: impact
+    attributes:
+      label: Impact
+      description: Explain the concrete user, reliability, security or maintenance impact.
+    validations:
+      required: true
+  - type: textarea
+    id: proposed_response
+    attributes:
+      label: Suggested response
+      description: Propose the smallest useful correction; do not prescribe speculative rewrites.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance_criteria
+    attributes:
+      label: Acceptance criteria
+      description: List observable outcomes and tests that demonstrate the fix.
+    validations:
+      required: true
+  - type: dropdown
+    id: risk
+    attributes:
+      label: Risk
+      description: Choose high for data, auth, authorization, secrets, schema, migration, deployment or permission changes.
+      options:
+        - low
+        - medium
+        - high
+    validations:
+      required: true
+  - type: textarea
+    id: changed_paths
+    attributes:
+      label: Suspected paths
+      description: List the known source paths involved; leave unknown paths blank.
+      render: text
+    validations:
+      required: false

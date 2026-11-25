@@ -1,0 +1,51 @@
+name: AI Pipeline Validation
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/extensions/**"
+      - ".github/agents/**"
+      - ".github/contracts/**"
+      - ".github/ISSUE_TEMPLATE/**"
+      - "scripts/ai-pipeline/**"
+      - ".github/workflows/ai-pipeline-validation.yml"
+  push:
+    branches: [main]
+    paths:
+      - ".github/extensions/**"
+      - ".github/agents/**"
+      - ".github/contracts/**"
+      - ".github/ISSUE_TEMPLATE/**"
+      - "scripts/ai-pipeline/**"
+      - ".github/workflows/ai-pipeline-validation.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ai-pipeline-validation-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.13.0
+
+      - name: Check extension and scripts syntax
+        run: |
+          node --check .github/extensions/issue-to-draft-pr/extension.mjs
+          node --check scripts/ai-pipeline/contracts.mjs
+          node --check scripts/ai-pipeline/bootstrap-labels.mjs
+          node --check scripts/ai-pipeline/preflight.mjs
+
+      - name: Test approval, risk and path contracts
+        run: node --test scripts/ai-pipeline/contracts.test.mjs
