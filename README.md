@@ -1,6 +1,6 @@
 # Todo dashboard
 
-A full-stack todo application built with TanStack Start, React, TypeScript, Prisma, and PostgreSQL. Sign in with Google to view, create, and complete todos saved to your account. The dashboard includes task totals, completion progress, a seven- or 30-day creation chart, URL-backed task search, filters, and bulk completion or deletion for the current page. Google sign-in requires a verified email address.
+A full-stack todo application built with TanStack Start, React, TypeScript, Prisma, and PostgreSQL. Sign in with Google to manage your tasks and share your board with other users. Board owners can invite viewers or editors; editors can create, edit, complete, and delete tasks, while viewers have read-only access. The dashboard includes task totals, completion progress, a seven- or 30-day creation chart, URL-backed task search, filters, and bulk task actions. Google sign-in requires a verified email address.
 
 The checked-in DuckDB fixture is used to seed sample users and todos into the local database; it is not shown as a shared dashboard.
 
@@ -40,7 +40,7 @@ npm run dev
 
 ## Demo data and database
 
-The app's data model is intentionally small: users own todos, and each todo has a title, completion flag, and creation time. The dashboard searches and filters on the server and displays 20 matching tasks per page. Search and reporting period are stored in the URL, and bulk actions are limited to selected tasks on the current page. The checked-in sample fixture powers the Prisma seed. To regenerate it with DuckDB:
+Users own todos, and accepted board shares grant either viewer or editor access according to the role selected by the owner. Todo reads and writes remain scoped to the board owner; editor mutations also require a current accepted editor share. The dashboard searches and filters on the server and displays 20 matching tasks per page. Search and reporting period are stored in the URL, and bulk actions are limited to selected tasks on the current page. The checked-in sample fixture powers the Prisma seed. To regenerate it with DuckDB:
 
 ```sh
 python3 -m venv .venv
@@ -64,6 +64,8 @@ The sample user is `demo@todo.dev`. Database configuration is read from `DATABAS
 Configure `DATABASE_URL`, `DIRECT_URL`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI`, and a strong `JWT_SECRET` in Vercel's Production environment. Use the Supabase pooled connection for `DATABASE_URL` and a direct or session-pooler connection for `DIRECT_URL`, which Prisma uses to apply migrations. Set the Google redirect URI to the exact HTTPS callback URL (`https://<your-domain>/auth/callback`) and register that same URL with Google. Production session and OAuth state cookies are marked `Secure`; deploy behind HTTPS.
 
 The production Vercel build runs `prisma migrate deploy` before building the app. Preview deployments do not run migrations. Verify the deployed app can complete Google sign-in, create/edit/complete/delete a task, and cannot access a task owned by a different account. CI validates the Prisma schema, tests OAuth callback and logout response flows, runs CRUD, bulk-action, and ownership integration tests against PostgreSQL, checks dashboard behavior in Chromium at mobile and desktop sizes, checks TypeScript, and builds the production app including the Prisma engine packaging check.
+
+The board-role migration is additive: existing shares default to view-only, and older application code remains compatible with that database schema. Roll back application code without reverting the migration; do not remove the role column or enum while any deployment may use editor permissions.
 
 ## Scripts
 

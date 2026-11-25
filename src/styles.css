@@ -64,6 +64,7 @@ button:focus-visible, input:focus-visible, a:focus-visible {
 .topbar { display: flex; height: 68px; align-items: center; justify-content: space-between; padding: 0 42px; border-bottom: 1px solid #eeedf4; background: #fff; }
 .topbar p { margin: 0; color: #77768c; font-size: 12px; }
 .topbar p span { padding: 0 8px; color: #c1c0cc; }
+.board-switcher { min-width: 0; }
 .board-switcher select { max-width: 240px; padding: 7px 10px; border: 1px solid #eae9f1; border-radius: 8px; color: #6e6d80; background: #fff; font: inherit; font-size: 11px; cursor: pointer; }
 .dashboard-content { width: min(1120px, 100%); margin: 0 auto; padding: 37px 42px 25px; }
 .welcome-row { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 24px; }
@@ -92,6 +93,7 @@ h1 { margin-bottom: 7px; font: 700 25px Inter, ui-sans-serif, sans-serif; letter
 .sharing-panel { margin-bottom: 16px; }
 .sharing-form { display: flex; gap: 8px; margin-top: 15px; }
 .sharing-form input { min-width: 0; flex: 1; padding: 9px 11px; border: 1px solid #eeedf4; border-radius: 7px; color: #4a495d; font-size: 11px; }
+.sharing-form select { min-width: 0; max-width: 140px; padding: 8px; border: 1px solid #eeedf4; border-radius: 7px; color: #4a495d; background: #fff; font-size: 10px; }
 .sharing-form button, .sharing-item-actions button, .sharing-item > button { padding: 7px 10px; border: 0; border-radius: 6px; color: #6e52d5; background: #f3f0ff; cursor: pointer; font-size: 10px; font-weight: 600; }
 .sharing-form button:disabled, .sharing-item button:disabled { cursor: not-allowed; opacity: .55; }
 .sharing-error, .sharing-message { margin: 9px 0 0; font-size: 10px; }
@@ -256,7 +258,7 @@ h1 { margin-bottom: 7px; font: 700 25px Inter, ui-sans-serif, sans-serif; letter
   }
   .main-content { margin-left: 0; }
   .topbar { height: 50px; padding: 0 18px; }
-  .board-switcher select { max-width: 175px; padding: 6px 7px; font-size: 10px; }
+  .board-switcher select { width: 175px; max-width: 175px; min-width: 0; padding: 6px 7px; font-size: 10px; }
   .dashboard-content { padding: 27px 18px 20px; }
   .insights-grid { grid-template-columns: 1fr; }
   .login-page { grid-template-columns: 1fr; }
@@ -268,6 +270,8 @@ h1 { margin-bottom: 7px; font: 700 25px Inter, ui-sans-serif, sans-serif; letter
 }
 
 @media (max-width: 480px) {
+  .topbar { gap: 8px; }
+  .topbar p { min-width: 0; overflow: hidden; flex: 1; text-overflow: ellipsis; white-space: nowrap; }
   .welcome-row { align-items: flex-start; gap: 12px; }
   h1 { font-size: 21px; }
   .welcome-copy { max-width: 245px; line-height: 1.6; }
@@ -278,6 +282,9 @@ h1 { margin-bottom: 7px; font: 700 25px Inter, ui-sans-serif, sans-serif; letter
   .tasks-panel { padding-right: 13px; padding-left: 13px; }
   .sharing-item { align-items: flex-start; flex-wrap: wrap; padding: 8px 0; }
   .sharing-item > span:first-child { flex-basis: 100%; }
+  .sharing-form { flex-wrap: wrap; }
+  .sharing-form input { flex-basis: 100%; }
+  .sharing-form select { flex: 1; max-width: none; }
   .tasks-heading { align-items: flex-start; gap: 10px; }
   .search-box { width: 150px; }
   .task-tabs { gap: 13px; }

@@ -1,0 +1,4 @@
+CREATE TYPE "BoardShareRole" AS ENUM ('VIEWER', 'EDITOR');
+
+ALTER TABLE "BoardShare"
+ADD COLUMN "role" "BoardShareRole" NOT NULL DEFAULT 'VIEWER';

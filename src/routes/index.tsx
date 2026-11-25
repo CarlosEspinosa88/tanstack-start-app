@@ -86,9 +86,11 @@ function Home() {
   const { todos, summary, activity, pagination } = dashboard
   const filter = query.status as TodoFilter
   const isSharedBoard = Boolean(query.board)
-  const selectedBoard = isSharedBoard
-    ? sharing.sharedBoards.find((share) => share.user.id === query.board)?.user
+  const selectedBoardShare = isSharedBoard
+    ? sharing.sharedBoards.find((share) => share.user.id === query.board)
     : undefined
+  const selectedBoard = selectedBoardShare?.user
+  const canEditBoard = !isSharedBoard || selectedBoardShare?.role === 'EDITOR'
   const [search, setSearch] = useState('')
   const [newTitle, setNewTitle] = useState('')
   const [newDueDate, setNewDueDate] = useState('')
@@ -102,6 +104,7 @@ function Home() {
   const [editingTitle, setEditingTitle] = useState('')
   const [editingDueDate, setEditingDueDate] = useState('')
   const [inviteEmail, setInviteEmail] = useState('')
+  const [inviteRole, setInviteRole] = useState<'VIEWER' | 'EDITOR'>('EDITOR')
   const [sharingError, setSharingError] = useState('')
   const [sharingMessage, setSharingMessage] = useState('')
   const [sharingBusy, setSharingBusy] = useState(false)
@@ -152,7 +155,11 @@ function Home() {
 
     try {
       await createTodo({
-        data: { title, dueDate: newDueDate || undefined },
+        data: {
+          title,
+          dueDate: newDueDate || undefined,
+          ...(query.board ? { boardOwnerId: query.board } : {}),
+        },
       })
       setNewTitle('')
       setNewDueDate('')
@@ -173,7 +180,13 @@ function Home() {
     setMutationError('')
 
     try {
-      await updateTodo({ data: { id, done: !done } })
+      await updateTodo({
+        data: {
+          id,
+          done: !done,
+          ...(query.board ? { boardOwnerId: query.board } : {}),
+        },
+      })
       await router.invalidate()
     } catch {
       setMutationError('Could not update your task. Please try again.')
@@ -198,7 +211,12 @@ function Home() {
 
     try {
       await updateTodo({
-        data: { id, title, dueDate: editingDueDate || null },
+        data: {
+          id,
+          title,
+          dueDate: editingDueDate || null,
+          ...(query.board ? { boardOwnerId: query.board } : {}),
+        },
       })
       setEditingId(null)
       await router.invalidate()
@@ -222,7 +240,9 @@ function Home() {
     setMutationError('')
 
     try {
-      await deleteTodo({ data: { id } })
+      await deleteTodo({
+        data: { id, ...(query.board ? { boardOwnerId: query.board } : {}) },
+      })
       await router.invalidate()
     } catch {
       setMutationError('Could not delete your task. Please try again.')
@@ -246,7 +266,13 @@ function Home() {
     setMutationError('')
 
     try {
-      await updateTodos({ data: { ids, done: true } })
+      await updateTodos({
+        data: {
+          ids,
+          done: true,
+          ...(query.board ? { boardOwnerId: query.board } : {}),
+        },
+      })
       setSelectedTodoIds(new Set())
       await router.invalidate()
     } catch {
@@ -271,7 +297,9 @@ function Home() {
     setMutationError('')
 
     try {
-      await deleteTodos({ data: { ids } })
+      await deleteTodos({
+        data: { ids, ...(query.board ? { boardOwnerId: query.board } : {}) },
+      })
       setSelectedTodoIds(new Set())
       await router.invalidate()
     } catch {
@@ -293,7 +321,9 @@ function Home() {
     setSharingMessage('')
 
     try {
-      await inviteToBoardAction({ data: { email: inviteEmail.trim() } })
+      await inviteToBoardAction({
+        data: { email: inviteEmail.trim(), role: inviteRole },
+      })
       setInviteEmail('')
       setSharingMessage('Invitation sent.')
       await router.invalidate()
@@ -385,6 +415,7 @@ function Home() {
             <span className="visually-hidden">Choose a board</span>
             <select
               aria-label="Choose a board"
+              style={{ width: 'min(240px, 42vw)' }}
               onChange={(event) => {
                 const board = event.currentTarget.value || undefined
                 setSelectedTodoIds(new Set())
@@ -442,8 +473,8 @@ function Home() {
                 <h2>{isSharedBoard ? 'Shared board' : 'Share your board'}</h2>
                 <p>
                   {isSharedBoard
-                    ? `Shared by ${selectedBoard?.name ?? selectedBoard?.email ?? 'another user'} · read-only access`
-                    : 'Invite another user to view your tasks.'}
+                    ? `Shared by ${selectedBoard?.name ?? selectedBoard?.email ?? 'another user'} · ${canEditBoard ? 'can edit tasks' : 'read-only access'}`
+                    : 'Invite another user to view or edit your tasks.'}
                 </p>
               </div>
             </div>
@@ -462,6 +493,19 @@ function Home() {
                     type="email"
                     value={inviteEmail}
                   />
+                  <label className="visually-hidden" htmlFor="share-role">
+                    Permission for invited user
+                  </label>
+                  <select
+                    id="share-role"
+                    onChange={(event) =>
+                      setInviteRole(event.currentTarget.value as 'VIEWER' | 'EDITOR')
+                    }
+                    value={inviteRole}
+                  >
+                    <option value="EDITOR">Can edit tasks</option>
+                    <option value="VIEWER">View only</option>
+                  </select>
                   <button disabled={!inviteEmail.trim() || sharingBusy} type="submit">
                     {sharingBusy ? 'Sending…' : 'Send invitation'}
                   </button>
@@ -476,6 +520,9 @@ function Home() {
                         <span>{share.user.name ?? share.user.email}</span>
                         <span className={`share-status ${share.status.toLowerCase()}`}>
                           {share.status.toLowerCase()}
+                        </span>
+                        <span className="share-status">
+                          {share.role === 'EDITOR' ? 'can edit' : 'view only'}
                         </span>
                         {share.status === 'ACCEPTED' && (
                           <button
@@ -497,7 +544,10 @@ function Home() {
                 <h3>Board invitations</h3>
                 {sharing.receivedInvitations.map((share) => (
                   <div className="sharing-item" key={share.id}>
-                    <span>{share.user.name ?? share.user.email} invited you to view their board</span>
+                    <span>
+                      {share.user.name ?? share.user.email} invited you to{' '}
+                      {share.role === 'EDITOR' ? 'edit' : 'view'} their board
+                    </span>
                     <span className="sharing-item-actions">
                       <button
                         disabled={sharingBusy}
@@ -628,7 +678,11 @@ function Home() {
             <div className="tasks-heading">
               <div>
                 <h2>{isSharedBoard ? 'Shared tasks' : 'Your tasks'}</h2>
-                <p>{isSharedBoard ? 'These tasks are visible to you but cannot be changed.' : 'Stay focused on what matters next.'}</p>
+                <p>{isSharedBoard
+                    ? canEditBoard
+                      ? 'You can create, edit, complete, and delete tasks on this board.'
+                      : 'These tasks are visible to you but cannot be changed.'
+                    : 'Stay focused on what matters next.'}</p>
               </div>
               <form className="search-box" onSubmit={handleSearch}>
                 <span aria-hidden="true">⌕</span>
@@ -657,7 +711,7 @@ function Home() {
                 <button type="submit" className="search-submit">Search</button>
               </form>
             </div>
-            {!isSharedBoard && <form className="todo-form" onSubmit={handleCreateTodo}>
+            {canEditBoard && <form className="todo-form" onSubmit={handleCreateTodo}>
               <label className="visually-hidden" htmlFor="new-todo-title">
                 New task
               </label>
@@ -700,7 +754,7 @@ function Home() {
                 </button>
               ))}
             </div>
-            {!isSharedBoard && <div className="bulk-actions">
+            {canEditBoard && <div className="bulk-actions">
               <label>
                 <input
                   aria-label="Select all tasks on this page"
@@ -749,7 +803,7 @@ function Home() {
                 <TaskRow
                   key={todo.id}
                   todo={todo}
-                  readOnly={isSharedBoard}
+                  readOnly={!canEditBoard}
                   isSelected={selectedTodoIds.has(todo.id)}
                   isSelectionDisabled={!isHydrated}
                   isEditing={editingId === todo.id}
@@ -804,7 +858,11 @@ function Home() {
             </div>
           </section>
           <footer className="dashboard-footer">
-            Your tasks are saved to your account.
+            {isSharedBoard
+              ? canEditBoard
+                ? 'Changes are saved to the shared board.'
+                : 'You have read-only access to this shared board.'
+              : 'Your tasks are saved to your account.'}
           </footer>
         </div>
       </main>

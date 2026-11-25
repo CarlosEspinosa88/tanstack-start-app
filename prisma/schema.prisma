@@ -40,6 +40,11 @@ enum BoardShareStatus {
   REVOKED
 }
 
+enum BoardShareRole {
+  VIEWER
+  EDITOR
+}
+
 model Todo {
   id String @id @default(cuid())
   title String
@@ -57,6 +62,7 @@ model BoardShare {
   ownerId String
   recipientId String
   status BoardShareStatus @default(PENDING)
+  role BoardShareRole @default(VIEWER)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   owner User @relation("OwnedBoardShares", fields: [ownerId], references: [id], onDelete: Cascade)

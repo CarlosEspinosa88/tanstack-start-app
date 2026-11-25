@@ -101,6 +101,7 @@ export const BoardShareScalarFieldEnum = {
   ownerId: 'ownerId',
   recipientId: 'recipientId',
   status: 'status',
+  role: 'role',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const

@@ -1,8 +1,10 @@
 export type BoardShareStatus = 'PENDING' | 'ACCEPTED' | 'DECLINED' | 'REVOKED'
+export type BoardShareRole = 'VIEWER' | 'EDITOR'
 
 export type BoardShareSummary = {
   id: string
   status: BoardShareStatus
+  role: BoardShareRole
   createdAt: Date
   user: { id: string; email: string; name: string | null }
 }
@@ -13,8 +15,12 @@ export type BoardSharingRepository = {
     id: string
     status: BoardShareStatus
   } | null>
-  createShare(ownerId: string, recipientId: string): Promise<void>
-  resetShareToPending(id: string): Promise<boolean>
+  createShare(
+    ownerId: string,
+    recipientId: string,
+    role: BoardShareRole,
+  ): Promise<void>
+  resetShareToPending(id: string, role: BoardShareRole): Promise<boolean>
   listOwnerShares(ownerId: string): Promise<BoardShareSummary[]>
   listPendingInvitations(recipientId: string): Promise<BoardShareSummary[]>
   listAcceptedBoards(recipientId: string): Promise<BoardShareSummary[]>
@@ -31,6 +37,7 @@ export async function inviteToBoard(
   repository: BoardSharingRepository,
   ownerId: string,
   email: string,
+  role: BoardShareRole,
 ) {
   const recipient = await repository.findUserByEmail(email.trim().toLowerCase())
 
@@ -53,7 +60,7 @@ export async function inviteToBoard(
   }
 
   if (existingShare) {
-    const reset = await repository.resetShareToPending(existingShare.id)
+    const reset = await repository.resetShareToPending(existingShare.id, role)
 
     if (!reset) {
       throw new Error('Could not send the invitation. Please try again')
@@ -62,7 +69,7 @@ export async function inviteToBoard(
     return
   }
 
-  await repository.createShare(ownerId, recipient.id)
+  await repository.createShare(ownerId, recipient.id, role)
 }
 
 export function getBoardSharingData(

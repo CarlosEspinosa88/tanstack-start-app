@@ -3,10 +3,12 @@ import { randomUUID } from 'node:crypto'
 import test from 'node:test'
 import { PrismaClient } from '../../generated/client'
 import {
-  createOwnedTodo,
-  deleteOwnedTodo,
+  createBoardTodo,
+  deleteBoardTodo,
+  deleteBoardTodos,
   getTodoDashboardData,
-  updateOwnedTodo,
+  updateBoardTodo,
+  updateBoardTodos,
 } from './todo-operations'
 import { createTodoRepository } from './todo-prisma-repository'
 
@@ -41,17 +43,54 @@ test(
         },
       })
       userIds.push(secondUser.id)
+      const editor = await prisma.user.create({
+        data: {
+          email: `test-editor-${suffix}@todo.dev`,
+          googleId: `test-editor-${suffix}`,
+        },
+      })
+      userIds.push(editor.id)
+      const viewer = await prisma.user.create({
+        data: {
+          email: `test-viewer-${suffix}@todo.dev`,
+          googleId: `test-viewer-${suffix}`,
+        },
+      })
+      userIds.push(viewer.id)
+      await prisma.boardShare.createMany({
+        data: [
+          {
+            ownerId: firstUser.id,
+            recipientId: editor.id,
+            status: 'ACCEPTED',
+            role: 'EDITOR',
+          },
+          {
+            ownerId: firstUser.id,
+            recipientId: viewer.id,
+            status: 'ACCEPTED',
+            role: 'VIEWER',
+          },
+          {
+            ownerId: firstUser.id,
+            recipientId: secondUser.id,
+            status: 'PENDING',
+            role: 'EDITOR',
+          },
+        ],
+      })
 
       const repository = createTodoRepository(prisma)
       const dueDate = new Date('2026-12-01T00:00:00.000Z')
-      const todo = await createOwnedTodo(
+      const todo = await createBoardTodo(
         repository,
+        firstUser.id,
         firstUser.id,
         'Integration task',
         dueDate,
       )
       assert.equal(todo.dueDate?.toISOString(), dueDate.toISOString())
-      await updateOwnedTodo(repository, firstUser.id, {
+      await updateBoardTodo(repository, firstUser.id, firstUser.id, {
         id: todo.id,
         title: 'Updated integration task',
         done: true,
@@ -72,32 +111,156 @@ test(
       assert.equal(dashboard.summary.completedCount, 1)
 
       await assert.rejects(
-        updateOwnedTodo(repository, secondUser.id, {
+        updateBoardTodo(repository, secondUser.id, firstUser.id, {
           id: todo.id,
           done: false,
         }),
         { message: 'Todo not found' },
       )
       await assert.rejects(
-        deleteOwnedTodo(repository, secondUser.id, todo.id),
+        deleteBoardTodo(repository, secondUser.id, firstUser.id, todo.id),
         { message: 'Todo not found' },
       )
       assert.equal(await prisma.todo.count({ where: { id: todo.id } }), 1)
 
-      const bulkTodo = await createOwnedTodo(
+      const editorTodo = await createBoardTodo(
         repository,
+        editor.id,
+        firstUser.id,
+        'Editor-created task',
+      )
+      assert.equal(editorTodo.userId, firstUser.id)
+      assert.equal(
+        await prisma.todo.count({
+          where: {
+            id: editorTodo.id,
+            userId: firstUser.id,
+            user: {
+              is: {
+                ownedBoardShares: {
+                  some: {
+                    recipientId: editor.id,
+                    status: 'ACCEPTED',
+                    role: 'EDITOR',
+                  },
+                },
+              },
+            },
+          },
+        }),
+        1,
+      )
+      await updateBoardTodo(repository, editor.id, firstUser.id, {
+        id: editorTodo.id,
+        title: 'Edited by collaborator',
+      })
+      assert.equal(
+        (await prisma.todo.findUniqueOrThrow({ where: { id: editorTodo.id } }))
+          .title,
+        'Edited by collaborator',
+      )
+      assert.equal(
+        await updateBoardTodos(
+          repository,
+          editor.id,
+          firstUser.id,
+          [editorTodo.id],
+          true,
+        ),
+        1,
+      )
+      assert.equal(
+        await deleteBoardTodos(repository, editor.id, firstUser.id, [editorTodo.id]),
+        1,
+      )
+
+      const protectedTodo = await createBoardTodo(
+        repository,
+        firstUser.id,
+        firstUser.id,
+        'Viewer-protected task',
+      )
+      await assert.rejects(
+        createBoardTodo(
+          repository,
+          viewer.id,
+          firstUser.id,
+          'Viewer-created task',
+        ),
+        { message: 'Board not found' },
+      )
+      await assert.rejects(
+        updateBoardTodo(repository, viewer.id, firstUser.id, {
+          id: protectedTodo.id,
+          done: true,
+        }),
+        { message: 'Todo not found' },
+      )
+      await assert.rejects(
+        deleteBoardTodo(repository, viewer.id, firstUser.id, protectedTodo.id),
+        { message: 'Todo not found' },
+      )
+      assert.equal(
+        await updateBoardTodos(
+          repository,
+          viewer.id,
+          firstUser.id,
+          [protectedTodo.id],
+          true,
+        ),
+        0,
+      )
+      assert.equal(
+        await deleteBoardTodos(repository, secondUser.id, firstUser.id, [
+          protectedTodo.id,
+        ]),
+        0,
+      )
+      assert.equal(
+        (await prisma.todo.findUniqueOrThrow({ where: { id: protectedTodo.id } }))
+          .done,
+        false,
+      )
+
+      const revokedTodo = await createBoardTodo(
+        repository,
+        firstUser.id,
+        firstUser.id,
+        'Revoked collaborator task',
+      )
+      await prisma.boardShare.updateMany({
+        where: {
+          ownerId: firstUser.id,
+          recipientId: editor.id,
+          status: 'ACCEPTED',
+        },
+        data: { status: 'REVOKED' },
+      })
+      await assert.rejects(
+        updateBoardTodo(repository, editor.id, firstUser.id, {
+          id: revokedTodo.id,
+          done: true,
+        }),
+        { message: 'Todo not found' },
+      )
+
+      const bulkTodo = await createBoardTodo(
+        repository,
+        firstUser.id,
         firstUser.id,
         'Bulk integration task',
       )
-      const secondUserTodo = await createOwnedTodo(
+      const secondUserTodo = await createBoardTodo(
         repository,
+        secondUser.id,
         secondUser.id,
         'Other user bulk task',
       )
       assert.equal(
-        await repository.updateManyOwned({
+        await repository.updateManyOnBoard({
           ids: [bulkTodo.id, secondUserTodo.id],
-          userId: firstUser.id,
+          actorId: firstUser.id,
+          boardOwnerId: firstUser.id,
           done: true,
         }),
         1,
@@ -112,16 +275,17 @@ test(
         false,
       )
       assert.equal(
-        await repository.deleteManyOwned({
+        await repository.deleteManyFromBoard({
           ids: [bulkTodo.id, secondUserTodo.id],
-          userId: firstUser.id,
+          actorId: firstUser.id,
+          boardOwnerId: firstUser.id,
         }),
         1,
       )
       assert.equal(await prisma.todo.count({ where: { id: bulkTodo.id } }), 0)
       assert.equal(await prisma.todo.count({ where: { id: secondUserTodo.id } }), 1)
 
-      await deleteOwnedTodo(repository, firstUser.id, todo.id)
+      await deleteBoardTodo(repository, firstUser.id, firstUser.id, todo.id)
       assert.equal(await prisma.todo.count({ where: { id: todo.id } }), 0)
     } finally {
       if (userIds.length > 0) {

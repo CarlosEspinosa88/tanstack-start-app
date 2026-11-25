@@ -17,3 +17,11 @@ export const BoardShareStatus = {
 } as const
 
 export type BoardShareStatus = (typeof BoardShareStatus)[keyof typeof BoardShareStatus]
+
+
+export const BoardShareRole = {
+  VIEWER: 'VIEWER',
+  EDITOR: 'EDITOR'
+} as const
+
+export type BoardShareRole = (typeof BoardShareRole)[keyof typeof BoardShareRole]

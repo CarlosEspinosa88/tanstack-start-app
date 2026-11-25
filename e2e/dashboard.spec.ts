@@ -13,8 +13,12 @@ test.describe('authenticated dashboard', () => {
 
   let prisma: PrismaClient | undefined
   let userId = ''
+  let sharedOwnerId = ''
+  let viewerOwnerId = ''
   let sessionToken = ''
   let taskTitle = ''
+  let sharedTaskTitle = ''
+  let viewerTaskTitle = ''
 
   test.beforeAll(async () => {
     if (!testDatabaseUrl) {
@@ -30,6 +34,46 @@ test.describe('authenticated dashboard', () => {
       },
     })
     userId = user.id
+    const ownerSuffix = randomUUID()
+    const owner = await prisma.user.create({
+      data: {
+        email: `playwright-owner-${ownerSuffix}@todo.dev`,
+        googleId: `playwright-owner-${ownerSuffix}`,
+      },
+    })
+    sharedOwnerId = owner.id
+    sharedTaskTitle = `shared-e2e-${randomUUID()}`
+    await prisma.todo.create({
+      data: { title: sharedTaskTitle, userId: sharedOwnerId },
+    })
+    await prisma.boardShare.create({
+      data: {
+        ownerId: sharedOwnerId,
+        recipientId: userId,
+        status: 'ACCEPTED',
+        role: 'EDITOR',
+      },
+    })
+    const viewerOwnerSuffix = randomUUID()
+    const viewerOwner = await prisma.user.create({
+      data: {
+        email: `playwright-viewer-owner-${viewerOwnerSuffix}@todo.dev`,
+        googleId: `playwright-viewer-owner-${viewerOwnerSuffix}`,
+      },
+    })
+    viewerOwnerId = viewerOwner.id
+    viewerTaskTitle = `viewer-e2e-${randomUUID()}`
+    await prisma.todo.create({
+      data: { title: viewerTaskTitle, userId: viewerOwnerId },
+    })
+    await prisma.boardShare.create({
+      data: {
+        ownerId: viewerOwnerId,
+        recipientId: userId,
+        status: 'ACCEPTED',
+        role: 'VIEWER',
+      },
+    })
     sessionToken = jwt.sign(
       { userId: user.id, email: user.email },
       jwtSecret,
@@ -42,6 +86,14 @@ test.describe('authenticated dashboard', () => {
       if (userId) {
         await prisma.todo.deleteMany({ where: { userId } })
         await prisma.user.delete({ where: { id: userId } })
+      }
+      if (sharedOwnerId) {
+        await prisma.todo.deleteMany({ where: { userId: sharedOwnerId } })
+        await prisma.user.delete({ where: { id: sharedOwnerId } })
+      }
+      if (viewerOwnerId) {
+        await prisma.todo.deleteMany({ where: { userId: viewerOwnerId } })
+        await prisma.user.delete({ where: { id: viewerOwnerId } })
       }
       await prisma.$disconnect()
     }
@@ -137,5 +189,55 @@ test.describe('authenticated dashboard', () => {
     page.once('dialog', (dialog) => dialog.accept())
     await page.getByRole('button', { name: 'Delete selected' }).click()
     await expect(row).toHaveCount(0)
+  })
+
+  test('editors can create, edit, complete, and delete shared-board tasks', async ({
+    page,
+  }) => {
+    await page.goto(`/?board=${sharedOwnerId}`)
+
+    await expect(
+      page.getByText('You can create, edit, complete, and delete tasks on this board.'),
+    ).toBeVisible()
+
+    const originalRow = page.locator('.task-row').filter({ hasText: sharedTaskTitle })
+    await expect(originalRow).toBeVisible()
+    await expect(
+      originalRow.getByRole('checkbox', { name: `Select task: ${sharedTaskTitle}` }),
+    ).toBeEnabled()
+    await originalRow.getByRole('button', { name: 'Edit', exact: true }).click()
+    await page
+      .getByRole('textbox', { name: `Edit task: ${sharedTaskTitle}` })
+      .fill('Updated shared task')
+    await page.getByRole('button', { name: 'Save' }).click()
+    const editedRow = page.locator('.task-row').filter({ hasText: 'Updated shared task' })
+    await expect(editedRow).toBeVisible()
+    await editedRow.getByRole('button', { name: 'Mark complete: Updated shared task' }).click()
+    await expect(editedRow.getByText('Completed')).toBeVisible()
+
+    page.once('dialog', (dialog) => dialog.accept())
+    await editedRow.getByRole('button', { name: 'Delete' }).click()
+    await expect(editedRow).toHaveCount(0)
+
+    await page.getByPlaceholder('Add a task').fill('New shared task')
+    await page.getByRole('button', { name: 'Add task' }).click()
+    await expect(page.locator('.task-row').filter({ hasText: 'New shared task' })).toBeVisible()
+  })
+
+  test('viewers see shared tasks without mutation controls', async ({ page }) => {
+    await page.goto(`/?board=${viewerOwnerId}`)
+
+    await expect(
+      page.getByText('These tasks are visible to you but cannot be changed.'),
+    ).toBeVisible()
+    await expect(page.getByPlaceholder('Add a task')).toHaveCount(0)
+
+    const row = page.locator('.task-row').filter({ hasText: viewerTaskTitle })
+    await expect(row).toBeVisible()
+    await expect(row.getByRole('button', { name: 'Edit', exact: true })).toHaveCount(0)
+    await expect(row.getByRole('button', { name: 'Delete', exact: true })).toHaveCount(0)
+    await expect(
+      row.getByRole('checkbox', { name: `Select task: ${viewerTaskTitle}` }),
+    ).toHaveCount(0)
   })
 })

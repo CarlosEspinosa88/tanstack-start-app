@@ -1,6 +1,6 @@
 ---
 name: data-ownership-sharing
-description: Procedure for implementing or reviewing todo ownership, shared-board viewing, invitations, responses, revocations, and cross-user access.
+description: Procedure for implementing or reviewing todo ownership, shared-board viewing and editing, invitations, responses, revocations, and cross-user access.
 ---
 
 # Data ownership and board-sharing rules
@@ -8,10 +8,11 @@ description: Procedure for implementing or reviewing todo ownership, shared-boar
 ## Existing authorization model
 
 - A Todo belongs to one User through `Todo.userId`.
-- Todo reads and writes in the Prisma repository are scoped by `userId`.
+- Todo reads and writes in the Prisma repository are scoped by the owning `userId`; shared-board writes additionally require an accepted `EDITOR` share for the authenticated actor.
 - BoardShare links `ownerId` and `recipientId`, with PENDING, ACCEPTED, DECLINED, and REVOKED states.
 - A viewer can access another user's board only when an accepted share exists.
-- The current shared-board path is for viewing; do not infer permission to mutate another owner's todos.
+- An accepted `VIEWER` share is read-only. Only an accepted `EDITOR` share permits todo CRUD.
+- Viewing a shared board alone never grants mutation rights; verify the explicit editor role before allowing writes.
 
 ## Before implementation
 
@@ -23,7 +24,7 @@ description: Procedure for implementing or reviewing todo ownership, shared-boar
 
 ## Implementation
 
-- Keep ownership constraints in the data query itself (for example, `where: { id, userId }`), not only in an earlier UI or route check.
+- Keep ownership and editor-permission constraints in mutation queries themselves, not only in an earlier UI or route check.
 - For shared reads, use the accepted-share check and constrain the queried board to the authorized owner.
 - For invitation response, require the current recipient and PENDING status.
 - For revocation, require the owner and the currently accepted share.
