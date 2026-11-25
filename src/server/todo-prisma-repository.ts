@@ -4,6 +4,23 @@ import type { TodoRepository } from './todo-operations'
 export function createTodoRepository(prisma: PrismaClient): TodoRepository {
   return {
     count: (where) => prisma.todo.count({ where }),
+    findSummary: async (userId) => {
+      const groups = await prisma.todo.groupBy({
+        by: ['done'],
+        where: { userId },
+        _count: { _all: true },
+      })
+      const openCount =
+        groups.find((group) => group.done === false)?._count._all ?? 0
+      const completedCount =
+        groups.find((group) => group.done === true)?._count._all ?? 0
+
+      return {
+        allCount: openCount + completedCount,
+        openCount,
+        completedCount,
+      }
+    },
     findPage: ({ where, skip, take }) =>
       prisma.todo.findMany({
         where,

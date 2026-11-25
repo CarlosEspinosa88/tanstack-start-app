@@ -37,6 +37,11 @@ function createRepository(overrides: Partial<TodoRepository> = {}) {
       calls.counts.push(where)
       return where.title ? 41 : where.done === false ? 7 : where.done === true ? 34 : 41
     },
+    findSummary: async () => ({
+      allCount: 41,
+      openCount: 7,
+      completedCount: 34,
+    }),
     findPage: async (args) => {
       calls.page = args
       return []
@@ -82,9 +87,6 @@ test('dashboard scopes search, status, counts, activity, and pagination to the u
 
   assert.deepEqual(calls.counts, [
     { userId: 'user-a', done: false, title: { contains: 'plan' } },
-    { userId: 'user-a' },
-    { userId: 'user-a', done: false },
-    { userId: 'user-a', done: true },
   ])
   assert.deepEqual(calls.page, {
     where: { userId: 'user-a', done: false, title: { contains: 'plan' } },

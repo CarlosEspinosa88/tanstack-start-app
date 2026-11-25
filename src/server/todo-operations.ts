@@ -23,6 +23,11 @@ export type TodoListOptions = {
 
 export type TodoRepository = {
   count(where: TodoWhere): Promise<number>
+  findSummary(userId: string): Promise<{
+    allCount: number
+    openCount: number
+    completedCount: number
+  }>
   findPage(args: {
     where: TodoWhere
     skip: number
@@ -65,12 +70,10 @@ export async function getTodoDashboardData(
   }
   const activityDayCount = options.period === '30d' ? 30 : 7
   const activityRange = getUtcActivityRange(now, activityDayCount)
-  const [total, allCount, openCount, completedCount, activityDates] =
+  const [total, summary, activityDates] =
     await Promise.all([
       repository.count(where),
-      repository.count({ userId }),
-      repository.count({ userId, done: false }),
-      repository.count({ userId, done: true }),
+      repository.findSummary(userId),
       repository.findActivityDates({
         userId,
         startDate: activityRange.startDate,
@@ -87,7 +90,7 @@ export async function getTodoDashboardData(
 
   return {
     todos,
-    summary: { allCount, openCount, completedCount },
+    summary,
     activity: buildTodoActivity(activityDates, now, activityDayCount),
     pagination: { page, pageSize, total, pageCount },
   }
