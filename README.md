@@ -67,6 +67,10 @@ The production Vercel build runs `prisma migrate deploy` before building the app
 
 The board-role migration is additive: existing shares default to view-only, and older application code remains compatible with that database schema. Roll back application code without reverting the migration; do not remove the role column or enum while any deployment may use editor permissions.
 
+## AI delivery pipeline
+
+See the [issue-to-Draft-PR operator guide](.github/extensions/issue-to-draft-pr/README.md) for the approved local workflow. Daily findings are proposals and do not authorize implementation; a human must apply `ai:approved` to each issue before execution. The workflow creates Draft PRs only and never merges or deploys.
+
 ## Scripts
 
 | Command | Purpose |
