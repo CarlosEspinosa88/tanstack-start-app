@@ -237,6 +237,27 @@ async function workingTreePaths() {
   });
 }
 
+async function restoreBuildGeneratedArtifacts(paths) {
+  const generated = paths.filter((path) => path.startsWith("generated/"));
+  const tracked = [];
+  const untracked = [];
+  for (const path of generated) {
+    try {
+      await run("git", ["ls-files", "--error-unmatch", "--", path]);
+      tracked.push(path);
+    } catch {
+      untracked.push(path);
+    }
+  }
+  if (tracked.length) {
+    await run("git", ["restore", "--worktree", "--", ...tracked]);
+  }
+  for (const path of untracked) {
+    await unlink(resolve(process.cwd(), path));
+  }
+  return generated;
+}
+
 function issueContext(snapshot) {
   return [
     "Repository: CarlosEspinosa88/tanstack-start-app.",
@@ -417,6 +438,10 @@ const issueToDraftPr = defineWorkflow({
         }
       }
 
+      const generatedArtifacts = await restoreBuildGeneratedArtifacts(await workingTreePaths());
+      if (generatedArtifacts.length) {
+        ctx.log(`Restored build-generated artifacts: ${generatedArtifacts.join(", ")}`);
+      }
       const finalPaths = await workingTreePaths();
       const finalGate = assessChangedPaths(finalPaths);
       if (!finalGate.ok) {
