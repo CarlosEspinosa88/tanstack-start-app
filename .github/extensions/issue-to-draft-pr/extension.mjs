@@ -1,4 +1,6 @@
 import { execFile } from "node:child_process";
+import { open, unlink } from "node:fs/promises";
+import { resolve } from "node:path";
 import { promisify } from "node:util";
 import {
   defineWorkflow,
@@ -17,6 +19,8 @@ import {
 } from "../../../scripts/ai-pipeline/contracts.mjs";
 
 const execFileAsync = promisify(execFile);
+let activeSignal;
+let activeRunId;
 const OWNER = "CarlosEspinosa88";
 const REPO = "tanstack-start-app";
 const REQUIRED_LABELS = [
@@ -99,6 +103,7 @@ async function run(binary, args, options = {}) {
     cwd: process.cwd(),
     env: options.env ?? process.env,
     timeout: options.timeout ?? 120_000,
+    signal: activeSignal,
     maxBuffer: 2 * 1024 * 1024,
     windowsHide: true,
   });
@@ -191,6 +196,30 @@ async function createWorkingBranch(issue) {
   return branch;
 }
 
+async function acquireRepositoryLock() {
+  const gitLockPath = await runText("git", ["rev-parse", "--git-path", "ai-delivery-workflow.lock"]);
+  const lockPath = resolve(process.cwd(), gitLockPath);
+  try {
+    const handle = await open(lockPath, "wx");
+    await handle.writeFile(JSON.stringify({
+      pid: process.pid,
+      startedAt: new Date().toISOString(),
+      purpose: "issue-to-draft-pr",
+    }));
+    return { handle, path: lockPath };
+  } catch (error) {
+    if (error?.code === "EEXIST") {
+      throw new Error("Another AI delivery workflow is using this local repository. Check that run or inspect the stale .git/ai-delivery-workflow.lock file before retrying.");
+    }
+    throw error;
+  }
+}
+
+async function releaseRepositoryLock(lock) {
+  if (!lock) return;
+  try { await lock.handle.close(); } catch {}
+  try { await unlink(lock.path); } catch {}
+}
 async function workingTreePaths() {
   const status = await runText("git", ["status", "--porcelain", "--untracked-files=all"]);
   return status.split("\n").filter(Boolean).flatMap((line) => {
@@ -251,10 +280,17 @@ const issueToDraftPr = defineWorkflow({
     if (!Number.isSafeInteger(issueNumber) || issueNumber <= 0) {
       throw new Error("issueNumber must be a positive integer.");
     }
+    if (activeRunId) {
+      throw new Error("Another issue-to-draft-pr run is already active in this Copilot session.");
+    }
 
+    activeRunId = ctx.runId;
+    activeSignal = ctx.signal;
+    let lock = null;
     let humanApproved = false;
     let branch = "";
     try {
+      lock = await acquireRepositoryLock();
       ctx.phase("Approval and preflight");
       await verifyLabelsExist();
       await ensureRepositoryPreconditions();
@@ -409,6 +445,17 @@ const issueToDraftPr = defineWorkflow({
         ? findings.map((finding) => `- ${finding.severity}: ${finding.summary}`).join("\n")
         : "- No P0/P1/P2 findings reported by the independent reviewers.";
       const testSummary = checks.map((check) => `- ${check.name}: ${check.status}`).join("\n");
+      const qaNotes = [
+        "### Verification plan",
+        ...(qaPlan.testPlan ?? []).map((item) => `- ${item}`),
+        "",
+        "### Tests added",
+        ...(qa.testsAdded?.length ? qa.testsAdded.map((item) => `- ${item}`) : ["- No additional tests reported by the QA agent."]),
+        "",
+        "### Known gaps",
+        ...(qa.gaps?.length ? qa.gaps.map((item) => `- ${item}`) : ["- No additional gaps reported by the QA agent."]),
+      ].join("\n");
+      const changedFilesSummary = finalPaths.map((path) => `- ${path}`).join("\n");
       const prBody = [
         `Closes #${issueNumber}`,
         "",
@@ -421,6 +468,12 @@ const issueToDraftPr = defineWorkflow({
         "## Automated checks",
         testSummary,
         "- Playwright E2E and full PostgreSQL CI run on this Draft PR; they were not run locally by the extension.",
+        "",
+        "## QA notes",
+        qaNotes,
+        "",
+        "## Changed files",
+        changedFilesSummary,
         "",
         "## Independent reviews",
         reviewSummary,
@@ -453,9 +506,19 @@ const issueToDraftPr = defineWorkflow({
       };
     } catch (error) {
       if (humanApproved) {
-        await markBlocked(issueNumber, [String(error.message ?? error).slice(0, 500)]);
+        const signal = activeSignal;
+        activeSignal = undefined;
+        try {
+          await markBlocked(issueNumber, [String(error.message ?? error).slice(0, 500)]);
+        } finally {
+          activeSignal = signal;
+        }
       }
       throw error;
+    } finally {
+      activeSignal = undefined;
+      activeRunId = undefined;
+      await releaseRepositoryLock(lock);
     }
   },
 });
