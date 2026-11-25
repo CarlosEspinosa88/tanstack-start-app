@@ -1,5 +1,4 @@
 import { execFile } from "node:child_process";
-import { readFileSync } from "node:fs";
 import { open, unlink } from "node:fs/promises";
 import { resolve } from "node:path";
 import { promisify } from "node:util";
@@ -104,48 +103,6 @@ const REVIEW_SCHEMA = {
     findings: { type: "array", items: { type: "object", required: ["severity", "summary", "path", "line", "impact", "recommendation"], additionalProperties: false, properties: { severity: { type: "string", enum: ["P0", "P1", "P2", "P3", "info"] }, summary: { type: "string" }, path: { type: "string" }, line: { type: "integer" }, impact: { type: "string" }, recommendation: { type: "string" } } } },
   },
 };
-const AGENT_DIR = resolve(process.cwd(), ".github/agents");
-const loadAgentPrompt = (fileName) =>
-  readFileSync(resolve(AGENT_DIR, fileName), "utf8");
-const WORKFLOW_AGENTS = {
-  architect: {
-    name: "issue-to-draft-pr-architect",
-    description: "Read-only architecture planner for the approved issue.",
-    prompt: loadAgentPrompt("tanstack-start-architect.agent.md"),
-    infer: false,
-  },
-  securityAuditor: {
-    name: "issue-to-draft-pr-security-auditor",
-    description: "Read-only security planner and reviewer for the approved issue.",
-    prompt: loadAgentPrompt("security-auditor.agent.md"),
-    infer: false,
-  },
-  qaPlanner: {
-    name: "issue-to-draft-pr-qa-planner",
-    description: "Read-only verification planner for the approved issue.",
-    prompt: loadAgentPrompt("qa-planner.agent.md"),
-    infer: false,
-  },
-  implementer: {
-    name: "issue-to-draft-pr-implementer",
-    description: "Implements the approved issue on the workflow feature branch.",
-    prompt: loadAgentPrompt("fullstack-engineer.agent.md"),
-    infer: false,
-  },
-  testEngineer: {
-    name: "issue-to-draft-pr-test-engineer",
-    description: "Adds focused tests and verifies the approved change.",
-    prompt: loadAgentPrompt("test-engineer.agent.md"),
-    infer: false,
-  },
-  reverseReviewer: {
-    name: "issue-to-draft-pr-reverse-reviewer",
-    description: "Read-only engineering reviewer for the current branch diff.",
-    prompt: loadAgentPrompt("engineering-reverse-review.agent.md"),
-    infer: false,
-  },
-};
-
 async function run(binary, args, options = {}) {
   const { stdout = "", stderr = "" } = await execFileAsync(binary, args, {
     cwd: process.cwd(),
@@ -327,7 +284,6 @@ const issueToDraftPr = defineWorkflow({
       timeoutSeconds: 3600,
     },
   },
-  agents: WORKFLOW_AGENTS,
   run: async (ctx) => {
     const issueNumber = Number(ctx.args?.issueNumber);
     if (!Number.isSafeInteger(issueNumber) || issueNumber <= 0) {
@@ -372,15 +328,15 @@ const issueToDraftPr = defineWorkflow({
       const [plan, security, qaPlan] = await ctx.parallel([
         () => ctx.agent(
           `${context}\n\nAct as the read-only TanStack Start architect. Read AGENTS.md, Copilot instructions, relevant route/server/repository/schema/test files, and the relevant feature/migration/security skills. Do not edit. Plan the smallest viable implementation. Identify migrationRequired and authzChanges accurately. Mark risk high for broad, destructive, security-sensitive, or data-changing tasks. Return ONLY a JSON object matching the requested schema; do not wrap it in Markdown or add commentary. Every required field must be present. Use empty strings or arrays when a field has no value.`,
-          { agent: ctx.agents.architect, label: planningLabels[0], schema: PLAN_SCHEMA },
+          { agent: "tanstack-start-architect", label: planningLabels[0], schema: PLAN_SCHEMA },
         ),
         () => ctx.agent(
           `${context}\n\nAct as the read-only security auditor. Inspect only the code paths relevant to this proposed change. Identify whether it requires authentication/authorization changes, access to secrets/credentials, or exposes a P0/P1/P2 risk. Do not edit. Report existing unrelated findings separately as context, not blockers. Return ONLY a JSON object matching the requested schema; do not wrap it in Markdown or add commentary. Every finding must include severity, summary, and path; use an empty path when no file applies.`,
-          { agent: ctx.agents.securityAuditor, label: planningLabels[1], schema: SECURITY_SCHEMA },
+          { agent: "security-auditor", label: planningLabels[1], schema: SECURITY_SCHEMA },
         ),
         () => ctx.agent(
           `${context}\n\nAct as a read-only QA planner. Inspect existing Node tests, Prisma integration tests, Playwright configuration, npm scripts, and CI. Return a focused verification plan and any blockers. Do not edit or execute commands. Return ONLY a JSON object matching the requested schema; do not wrap it in Markdown or add commentary. Every required field must be present.`,
-          { agent: ctx.agents.qaPlanner, label: planningLabels[2], schema: QA_PLAN_SCHEMA },
+          { agent: "qa-planner", label: planningLabels[2], schema: QA_PLAN_SCHEMA },
         ),
       ]);
 
@@ -416,7 +372,7 @@ const issueToDraftPr = defineWorkflow({
       ctx.phase("Implementation");
       const implementation = await ctx.agent(
         `${context}\n\nApproved plan:\n${JSON.stringify(plan)}\n\nQA plan:\n${JSON.stringify(qaPlan)}\n\nImplement the smallest complete solution on the current feature branch. Follow AGENTS.md and the matching .github/instructions and skills. Use the existing TanStack Start architecture (not Next.js). Preserve PostgreSQL ownership and VIEWER/EDITOR semantics. Do not change Prisma schema/migrations, generated files, auth/session code, authorization, repositories, GitHub configuration, scripts, package manifests, secrets, deployment or infrastructure. Add or update tests where behavior changes. Do not commit, push, create a PR, deploy, or run destructive database commands. If the task cannot be completed without a protected change, do not attempt it; return blocked with a clear reason. Return JSON matching the requested schema.`,
-        { agent: ctx.agents.implementer, label: `issue-${issueNumber}-implementation`, schema: IMPLEMENTATION_SCHEMA },
+        { agent: "tanstack-start-fullstack-engineer", label: `issue-${issueNumber}-implementation`, schema: IMPLEMENTATION_SCHEMA },
       );
       if (!implementation || implementation.status !== "implemented") {
         return await blockAndReturn(ctx, issueNumber, implementation?.blockers?.length ? implementation.blockers : ["Implementation agent did not complete the approved scope."]);
@@ -425,7 +381,7 @@ const issueToDraftPr = defineWorkflow({
       ctx.phase("Quality validation");
       const qa = await ctx.agent(
         `${context}\n\nImplementation report:\n${JSON.stringify(implementation)}\n\nReview the current diff and existing test conventions. Add only focused missing tests for changed behavior. Do not alter production logic unless needed to make the test meaningful. Do not touch protected paths, database schema, authentication, authorization, secrets, scripts, workflows or package files. Do not commit, push, deploy, or run migrations. Return JSON matching the requested schema.`,
-        { agent: ctx.agents.testEngineer, label: `issue-${issueNumber}-qa-implementation`, schema: QA_RESULT_SCHEMA },
+        { agent: "test-engineer", label: `issue-${issueNumber}-qa-implementation`, schema: QA_RESULT_SCHEMA },
       );
       if (!qa || qa.status !== "ready") {
         return await blockAndReturn(ctx, issueNumber, qa?.blockers?.length ? qa.blockers : ["Test engineer could not establish test readiness."]);
@@ -474,11 +430,11 @@ const issueToDraftPr = defineWorkflow({
       const [review, securityReview] = await ctx.parallel([
         () => ctx.agent(
           `${reviewPrompt}\n\nAct as Engineering Reverse Review. Trace the changed behavior across callers, server functions, data access and tests. Report only concrete regressions introduced by this diff. Do not edit.`,
-          { agent: ctx.agents.reverseReviewer, label: `issue-${issueNumber}-reverse-review`, schema: REVIEW_SCHEMA },
+          { agent: "Engineering Reverse Review", label: `issue-${issueNumber}-reverse-review`, schema: REVIEW_SCHEMA },
         ),
         () => ctx.agent(
           `${reviewPrompt}\n\nAct as Security Auditor. Check only security issues introduced by this diff or directly relevant to its changed paths, including data ownership and VIEWER/EDITOR access. Report concrete findings only. Do not edit.`,
-          { agent: ctx.agents.securityAuditor, label: `issue-${issueNumber}-security-review`, schema: REVIEW_SCHEMA },
+          { agent: "security-auditor", label: `issue-${issueNumber}-security-review`, schema: REVIEW_SCHEMA },
         ),
       ]);
       if (!review || !securityReview) {
