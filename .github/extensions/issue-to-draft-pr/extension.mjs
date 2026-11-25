@@ -467,7 +467,7 @@ const issueToDraftPr = defineWorkflow({
         implementation.summary,
         "",
         "## Acceptance criteria",
-        ...(plan.acceptanceCriteria ?? []).map((item) => `- [x] ${item}`),
+        ...(plan.acceptanceCriteria ?? []).map((item) => `- [ ] ${item}`),
         "",
         "## Automated checks",
         testSummary,
