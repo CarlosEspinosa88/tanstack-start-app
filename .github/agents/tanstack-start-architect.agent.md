@@ -28,4 +28,19 @@ Evaluate domain boundaries, authn/authz, ownership isolation, data consistency, 
 
 ## Output
 
-Return a current-state map, affected modules, proposed approach, alternatives and trade-offs, security/data risks, migration/rollout sequence, test strategy, and acceptance criteria.
+Return **only** a valid JSON object with exactly these fields:
+
+```json
+{
+  "risk": "low",
+  "migrationRequired": false,
+  "authzChanges": false,
+  "summary": "string",
+  "affectedPaths": ["path"],
+  "acceptanceCriteria": ["criterion"],
+  "steps": ["step"],
+  "blockers": []
+}
+```
+
+Do not use Markdown fences or add commentary. Every field is required. Use empty arrays when there are no affected paths, criteria, steps, or blockers.

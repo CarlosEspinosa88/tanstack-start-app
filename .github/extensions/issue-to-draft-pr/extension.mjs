@@ -40,6 +40,7 @@ const ISSUE_SCHEMA = {
 const PLAN_SCHEMA = {
   type: "object",
   required: ["risk", "migrationRequired", "authzChanges", "summary", "affectedPaths", "acceptanceCriteria", "steps", "blockers"],
+  additionalProperties: false,
   properties: {
     risk: { type: "string", enum: ["low", "medium", "high"] },
     migrationRequired: { type: "boolean" },
@@ -54,17 +55,19 @@ const PLAN_SCHEMA = {
 const SECURITY_SCHEMA = {
   type: "object",
   required: ["risk", "authzChanges", "secretAccessRequired", "findings", "blockers"],
+  additionalProperties: false,
   properties: {
     risk: { type: "string", enum: ["low", "medium", "high"] },
     authzChanges: { type: "boolean" },
     secretAccessRequired: { type: "boolean" },
-    findings: { type: "array", items: { type: "object", required: ["severity", "summary"], properties: { severity: { type: "string", enum: ["P0", "P1", "P2", "P3", "info"] }, summary: { type: "string" }, path: { type: "string" } } } },
+    findings: { type: "array", items: { type: "object", required: ["severity", "summary", "path"], additionalProperties: false, properties: { severity: { type: "string", enum: ["P0", "P1", "P2", "P3", "info"] }, summary: { type: "string" }, path: { type: "string" } } } },
     blockers: { type: "array", items: { type: "string" } },
   },
 };
 const QA_PLAN_SCHEMA = {
   type: "object",
   required: ["testPlan", "blockers"],
+  additionalProperties: false,
   properties: {
     testPlan: { type: "array", items: { type: "string" } },
     blockers: { type: "array", items: { type: "string" } },
@@ -73,6 +76,7 @@ const QA_PLAN_SCHEMA = {
 const IMPLEMENTATION_SCHEMA = {
   type: "object",
   required: ["status", "summary", "changedFiles", "blockers"],
+  additionalProperties: false,
   properties: {
     status: { type: "string", enum: ["implemented", "blocked"] },
     summary: { type: "string" },
@@ -83,6 +87,7 @@ const IMPLEMENTATION_SCHEMA = {
 const QA_RESULT_SCHEMA = {
   type: "object",
   required: ["status", "testsAdded", "gaps", "blockers"],
+  additionalProperties: false,
   properties: {
     status: { type: "string", enum: ["ready", "blocked"] },
     testsAdded: { type: "array", items: { type: "string" } },
@@ -93,8 +98,9 @@ const QA_RESULT_SCHEMA = {
 const REVIEW_SCHEMA = {
   type: "object",
   required: ["findings"],
+  additionalProperties: false,
   properties: {
-    findings: { type: "array", items: { type: "object", required: ["severity", "summary"], properties: { severity: { type: "string", enum: ["P0", "P1", "P2", "P3", "info"] }, summary: { type: "string" }, path: { type: "string" }, line: { type: "integer" }, impact: { type: "string" }, recommendation: { type: "string" } } } },
+    findings: { type: "array", items: { type: "object", required: ["severity", "summary", "path", "line", "impact", "recommendation"], additionalProperties: false, properties: { severity: { type: "string", enum: ["P0", "P1", "P2", "P3", "info"] }, summary: { type: "string" }, path: { type: "string" }, line: { type: "integer" }, impact: { type: "string" }, recommendation: { type: "string" } } } },
   },
 };
 
@@ -315,23 +321,33 @@ const issueToDraftPr = defineWorkflow({
 
       ctx.phase("Architecture and risk review");
       const context = issueContext(snapshot);
+      const planningLabels = [
+        `issue-${issueNumber}-architecture`,
+        `issue-${issueNumber}-security-plan`,
+        `issue-${issueNumber}-qa-plan`,
+      ];
       const [plan, security, qaPlan] = await ctx.parallel([
         () => ctx.agent(
-          `${context}\n\nAct as the read-only TanStack Start architect. Read AGENTS.md, Copilot instructions, relevant route/server/repository/schema/test files, and the relevant feature/migration/security skills. Do not edit. Plan the smallest viable implementation. Identify migrationRequired and authzChanges accurately. Mark risk high for broad, destructive, security-sensitive, or data-changing tasks. Return JSON matching the requested schema.`,
-          { agent: "tanstack-start-architect", label: `issue-${issueNumber}-architecture`, schema: PLAN_SCHEMA },
+          `${context}\n\nAct as the read-only TanStack Start architect. Read AGENTS.md, Copilot instructions, relevant route/server/repository/schema/test files, and the relevant feature/migration/security skills. Do not edit. Plan the smallest viable implementation. Identify migrationRequired and authzChanges accurately. Mark risk high for broad, destructive, security-sensitive, or data-changing tasks. Return ONLY a JSON object matching the requested schema; do not wrap it in Markdown or add commentary. Every required field must be present. Use empty strings or arrays when a field has no value.`,
+          { agent: "tanstack-start-architect", label: planningLabels[0], schema: PLAN_SCHEMA },
         ),
         () => ctx.agent(
-          `${context}\n\nAct as the read-only security auditor. Inspect only the code paths relevant to this proposed change. Identify whether it requires authentication/authorization changes, access to secrets/credentials, or exposes a P0/P1/P2 risk. Do not edit. Report existing unrelated findings separately as context, not blockers. Return JSON matching the requested schema.`,
-          { agent: "security-auditor", label: `issue-${issueNumber}-security-plan`, schema: SECURITY_SCHEMA },
+          `${context}\n\nAct as the read-only security auditor. Inspect only the code paths relevant to this proposed change. Identify whether it requires authentication/authorization changes, access to secrets/credentials, or exposes a P0/P1/P2 risk. Do not edit. Report existing unrelated findings separately as context, not blockers. Return ONLY a JSON object matching the requested schema; do not wrap it in Markdown or add commentary. Every finding must include severity, summary, and path; use an empty path when no file applies.`,
+          { agent: "security-auditor", label: planningLabels[1], schema: SECURITY_SCHEMA },
         ),
         () => ctx.agent(
-          `${context}\n\nAct as a read-only QA planner. Inspect existing Node tests, Prisma integration tests, Playwright configuration, npm scripts, and CI. Return a focused verification plan and any blockers. Do not edit or execute commands. Return JSON matching the requested schema.`,
-          { agent: "qa-planner", label: `issue-${issueNumber}-qa-plan`, schema: QA_PLAN_SCHEMA },
+          `${context}\n\nAct as a read-only QA planner. Inspect existing Node tests, Prisma integration tests, Playwright configuration, npm scripts, and CI. Return a focused verification plan and any blockers. Do not edit or execute commands. Return ONLY a JSON object matching the requested schema; do not wrap it in Markdown or add commentary. Every required field must be present.`,
+          { agent: "qa-planner", label: planningLabels[2], schema: QA_PLAN_SCHEMA },
         ),
       ]);
 
       if (!plan || !security || !qaPlan) {
-        return await blockAndReturn(ctx, issueNumber, ["A planning agent failed to return a structured result."]);
+        const missing = [plan, security, qaPlan]
+          .map((result, index) => result ? null : planningLabels[index])
+          .filter(Boolean);
+        return await blockAndReturn(ctx, issueNumber, [
+          `Planning agents failed to return structured results: ${missing.join(", ")}.`,
+        ]);
       }
 
       const riskGate = assessPlan(plan, security);
