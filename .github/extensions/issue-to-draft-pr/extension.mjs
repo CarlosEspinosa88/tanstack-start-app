@@ -155,13 +155,17 @@ async function commentOnIssue(issueNumber, body) {
 }
 
 async function markBlocked(issueNumber, reasons) {
-  const summary = [...new Set((reasons ?? []).filter(Boolean))].join("\n- ").slice(0, 1400);
+  const summary = [...new Set((reasons ?? []).filter(Boolean))].join("\\n- ").slice(0, 1400);
+  const signal = activeSignal;
+  activeSignal = undefined;
   try {
     await addIssueLabel(issueNumber, AI_LABELS.blocked);
     await removeIssueLabel(issueNumber, AI_LABELS.inProgress);
-    await commentOnIssue(issueNumber, `**AI delivery blocked.** Human intervention is required before this issue can be retried.\n\n- ${summary || "The workflow stopped before producing a reviewable change."}\n\nThe workflow did not merge or deploy anything.`);
+    await commentOnIssue(issueNumber, `**AI delivery blocked.** Human intervention is required before this issue can be retried.\\n\\n- ${summary || "The workflow stopped before producing a reviewable change."}\\n\\nThe workflow did not merge or deploy anything.`);
   } catch {
     // The main error is returned even if GitHub label/comment updates fail.
+  } finally {
+    activeSignal = signal;
   }
 }
 
