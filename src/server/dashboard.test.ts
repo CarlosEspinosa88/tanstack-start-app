@@ -72,6 +72,13 @@ test('todo inputs trim titles and reject invalid or empty updates', () => {
   )
   assert.equal(CreateTodoInput.safeParse({ title: '   ' }).success, false)
   assert.equal(CreateTodoInput.safeParse({ title: 'x'.repeat(141) }).success, false)
+  assert.equal(
+    CreateTodoInput.safeParse({
+      title: 'Shared task',
+      boardOwnerId: 'owner-1',
+    }).success,
+    true,
+  )
   assert.equal(UpdateTodoInput.safeParse({ id: 'todo-1', done: true }).success, true)
   assert.equal(UpdateTodoInput.safeParse({ id: 'todo-1', title: '  Edit  ' }).success, true)
   assert.equal(
@@ -84,6 +91,10 @@ test('todo inputs trim titles and reject invalid or empty updates', () => {
   )
   assert.equal(UpdateTodoInput.safeParse({ id: 'todo-1' }).success, false)
   assert.equal(DeleteTodoInput.safeParse({ id: '' }).success, false)
+  assert.equal(
+    DeleteTodoInput.safeParse({ id: 'todo-1', boardOwnerId: '' }).success,
+    false,
+  )
 })
 
 test('task list input validates pagination, status, and search bounds', () => {

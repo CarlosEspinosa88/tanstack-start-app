@@ -13,9 +13,10 @@
 
 ## Data ownership and authorization
 
-- Every todo read or mutation must remain scoped to its owning `userId`, except an explicitly authorized board-view flow.
+- Every todo read or mutation must remain scoped to its owning `userId`; shared-board mutations are allowed only through the explicitly authorized editor flow.
 - Shared-board reads must preserve the accepted-share check implemented by `ensureBoardViewAccess` and the board-sharing repository.
-- An accepted share grants board viewing in the current flow; do not assume it grants mutation rights over another user's todos.
+- An accepted `VIEWER` share grants read-only board access. An accepted `EDITOR` share permits todo CRUD, with every mutation scoped to the board owner and rechecked against the current accepted editor share in the repository query.
+- Invitations default to `VIEWER` unless the owner explicitly selects `EDITOR`; existing shares remain viewers through the migration default.
 - Invitation responses must remain scoped to the recipient and pending state. Revocations must remain scoped to the owner and accepted state.
 - Do not infer that the `User.role` string is a complete role-based authorization system; inspect actual checks before relying on it.
 

@@ -1,11 +1,11 @@
 import { createServerFn } from '@tanstack/react-start'
 import {
-  createOwnedTodo,
-  deleteOwnedTodos,
-  deleteOwnedTodo,
+  createBoardTodo,
+  deleteBoardTodos,
+  deleteBoardTodo,
   getTodoDashboardData,
-  updateOwnedTodos,
-  updateOwnedTodo,
+  updateBoardTodos,
+  updateBoardTodo,
 } from './todo-operations'
 import { createTodoRepository } from './todo-prisma-repository'
 import {
@@ -91,6 +91,7 @@ export const inviteToBoardAction = createServerFn({ method: 'POST' })
       createBoardSharingRepository(prisma),
       user.id,
       data.email,
+      data.role,
     )
   })
 
@@ -126,9 +127,10 @@ export const createTodo = createServerFn({ method: 'POST' })
   .handler(async ({ data }) => {
     const user = await requireRequestUser()
     const { prisma } = await import('./db')
-    return createOwnedTodo(
+    return createBoardTodo(
       createTodoRepository(prisma),
       user.id,
+      data.boardOwnerId ?? user.id,
       data.title,
       data.dueDate ? new Date(`${data.dueDate}T00:00:00.000Z`) : undefined,
     )
@@ -139,14 +141,16 @@ export const updateTodo = createServerFn({ method: 'POST' })
   .handler(async ({ data }) => {
     const user = await requireRequestUser()
     const { prisma } = await import('./db')
-    const { dueDate: dueDateInput, ...fields } = data
+    const { dueDate: dueDateInput, boardOwnerId, ...fields } = data
     const dueDate = typeof dueDateInput === 'string'
       ? new Date(`${dueDateInput}T00:00:00.000Z`)
       : dueDateInput
-    return updateOwnedTodo(createTodoRepository(prisma), user.id, {
-      ...fields,
-      dueDate,
-    })
+    return updateBoardTodo(
+      createTodoRepository(prisma),
+      user.id,
+      boardOwnerId ?? user.id,
+      { ...fields, dueDate },
+    )
   })
 
 export const deleteTodo = createServerFn({ method: 'POST' })
@@ -154,7 +158,12 @@ export const deleteTodo = createServerFn({ method: 'POST' })
   .handler(async ({ data }) => {
     const user = await requireRequestUser()
     const { prisma } = await import('./db')
-    return deleteOwnedTodo(createTodoRepository(prisma), user.id, data.id)
+    return deleteBoardTodo(
+      createTodoRepository(prisma),
+      user.id,
+      data.boardOwnerId ?? user.id,
+      data.id,
+    )
   })
 
 export const updateTodos = createServerFn({ method: 'POST' })
@@ -162,11 +171,13 @@ export const updateTodos = createServerFn({ method: 'POST' })
   .handler(async ({ data }) => {
     const user = await requireRequestUser()
     const { prisma } = await import('./db')
-    return updateOwnedTodos(
+    const { boardOwnerId, ...fields } = data
+    return updateBoardTodos(
       createTodoRepository(prisma),
       user.id,
-      data.ids,
-      data.done,
+      boardOwnerId ?? user.id,
+      fields.ids,
+      fields.done,
     )
   })
 
@@ -175,5 +186,10 @@ export const deleteTodos = createServerFn({ method: 'POST' })
   .handler(async ({ data }) => {
     const user = await requireRequestUser()
     const { prisma } = await import('./db')
-    return deleteOwnedTodos(createTodoRepository(prisma), user.id, data.ids)
+    return deleteBoardTodos(
+      createTodoRepository(prisma),
+      user.id,
+      data.boardOwnerId ?? user.id,
+      data.ids,
+    )
   })

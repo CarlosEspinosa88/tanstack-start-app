@@ -1,15 +1,15 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import {
-  createOwnedTodo,
-  deleteOwnedTodo,
+  createBoardTodo,
+  deleteBoardTodo,
   getTodoDashboardData,
-  deleteOwnedTodos,
+  deleteBoardTodos,
   type TodoRecord,
   type TodoRepository,
   type TodoWhere,
-  updateOwnedTodo,
-  updateOwnedTodos,
+  updateBoardTodo,
+  updateBoardTodos,
 } from './todo-operations'
 
 const sampleTodo: TodoRecord = {
@@ -26,17 +26,28 @@ function createRepository(overrides: Partial<TodoRepository> = {}) {
     counts: TodoWhere[]
     page?: { where: TodoWhere; skip: number; take: number }
     activity?: { userId: string; startDate: Date; exclusiveEndDate: Date }
-    created?: { title: string; dueDate?: Date; userId: string }
+    created?: {
+      title: string
+      dueDate?: Date
+      actorId: string
+      boardOwnerId: string
+    }
     updated?: {
       id: string
-      userId: string
+      actorId: string
+      boardOwnerId: string
       title?: string
       done?: boolean
       dueDate?: Date | null
     }
-    deleted?: { id: string; userId: string }
-    updatedMany?: { ids: string[]; userId: string; done: boolean }
-    deletedMany?: { ids: string[]; userId: string }
+    deleted?: { id: string; actorId: string; boardOwnerId: string }
+    updatedMany?: {
+      ids: string[]
+      actorId: string
+      boardOwnerId: string
+      done: boolean
+    }
+    deletedMany?: { ids: string[]; actorId: string; boardOwnerId: string }
   } = { counts: [] }
 
   const repository: TodoRepository = {
@@ -56,19 +67,19 @@ function createRepository(overrides: Partial<TodoRepository> = {}) {
       calls.created = args
       return { ...sampleTodo, ...args }
     },
-    updateOwned: async (args) => {
+    updateOnBoard: async (args) => {
       calls.updated = args
       return { ...sampleTodo, ...args }
     },
-    deleteOwned: async (args) => {
+    deleteFromBoard: async (args) => {
       calls.deleted = args
       return true
     },
-    updateManyOwned: async (args) => {
+    updateManyOnBoard: async (args) => {
       calls.updatedMany = args
       return args.ids.length
     },
-    deleteManyOwned: async (args) => {
+    deleteManyFromBoard: async (args) => {
       calls.deletedMany = args
       return args.ids.length
     },
@@ -133,73 +144,89 @@ test('dashboard requests the selected activity period', async () => {
   assert.equal(dashboard.activity.length, 30)
 })
 
-test('create, update, and delete always carry the authenticated owner id', async () => {
+test('create, update, and delete carry the actor and board owner separately', async () => {
   const { repository, calls } = createRepository()
 
   const dueDate = new Date('2026-12-01T00:00:00.000Z')
-  await createOwnedTodo(repository, 'user-a', 'Plan week', dueDate)
-  await updateOwnedTodo(repository, 'user-a', {
+  await createBoardTodo(repository, 'user-a', 'user-a', 'Plan week', dueDate)
+  await updateBoardTodo(repository, 'user-a', 'user-a', {
     id: 'todo-1',
     title: 'Plan next week',
     dueDate: null,
   })
-  await deleteOwnedTodo(repository, 'user-a', 'todo-1')
+  await deleteBoardTodo(repository, 'user-a', 'user-a', 'todo-1')
 
   assert.deepEqual(calls.created, {
     title: 'Plan week',
     dueDate,
-    userId: 'user-a',
+    actorId: 'user-a',
+    boardOwnerId: 'user-a',
   })
   assert.deepEqual(calls.updated, {
     id: 'todo-1',
     title: 'Plan next week',
     dueDate: null,
-    userId: 'user-a',
+    actorId: 'user-a',
+    boardOwnerId: 'user-a',
   })
-  assert.deepEqual(calls.deleted, { id: 'todo-1', userId: 'user-a' })
+  assert.deepEqual(calls.deleted, {
+    id: 'todo-1',
+    actorId: 'user-a',
+    boardOwnerId: 'user-a',
+  })
 })
 
 test('update and delete report missing or non-owned todos', async () => {
   const { repository, calls } = createRepository({
-    updateOwned: async (args) => {
+    updateOnBoard: async (args) => {
       calls.updated = args
       return null
     },
-    deleteOwned: async (args) => {
+    deleteFromBoard: async (args) => {
       calls.deleted = args
       return false
     },
   })
 
   await assert.rejects(
-    updateOwnedTodo(repository, 'user-a', { id: 'todo-other', done: true }),
+    updateBoardTodo(repository, 'user-a', 'user-a', {
+      id: 'todo-other',
+      done: true,
+    }),
     { message: 'Todo not found' },
   )
   await assert.rejects(
-    deleteOwnedTodo(repository, 'user-a', 'todo-other'),
+    deleteBoardTodo(repository, 'user-a', 'user-a', 'todo-other'),
     { message: 'Todo not found' },
   )
   assert.deepEqual(calls.updated, {
     id: 'todo-other',
     done: true,
-    userId: 'user-a',
+    actorId: 'user-a',
+    boardOwnerId: 'user-a',
   })
-  assert.deepEqual(calls.deleted, { id: 'todo-other', userId: 'user-a' })
+  assert.deepEqual(calls.deleted, {
+    id: 'todo-other',
+    actorId: 'user-a',
+    boardOwnerId: 'user-a',
+  })
 })
 
 test('bulk update and delete always scope every id to the authenticated owner', async () => {
   const { repository, calls } = createRepository()
 
-  await updateOwnedTodos(repository, 'user-a', ['todo-1', 'todo-2'], true)
-  await deleteOwnedTodos(repository, 'user-a', ['todo-3', 'todo-4'])
+  await updateBoardTodos(repository, 'user-a', 'user-a', ['todo-1', 'todo-2'], true)
+  await deleteBoardTodos(repository, 'user-a', 'user-a', ['todo-3', 'todo-4'])
 
   assert.deepEqual(calls.updatedMany, {
     ids: ['todo-1', 'todo-2'],
-    userId: 'user-a',
+    actorId: 'user-a',
+    boardOwnerId: 'user-a',
     done: true,
   })
   assert.deepEqual(calls.deletedMany, {
     ids: ['todo-3', 'todo-4'],
-    userId: 'user-a',
+    actorId: 'user-a',
+    boardOwnerId: 'user-a',
   })
 })

@@ -21,16 +21,16 @@ export function createBoardSharingRepository(
       })
       return share
     },
-    createShare: async (ownerId, recipientId) => {
-      await prisma.boardShare.create({ data: { ownerId, recipientId } })
+    createShare: async (ownerId, recipientId, role) => {
+      await prisma.boardShare.create({ data: { ownerId, recipientId, role } })
     },
-    resetShareToPending: async (id) => {
+    resetShareToPending: async (id, role) => {
       const result = await prisma.boardShare.updateMany({
         where: {
           id,
           status: { in: ['DECLINED', 'REVOKED'] },
         },
-        data: { status: 'PENDING' },
+        data: { status: 'PENDING', role },
       })
       return result.count > 0
     },
@@ -41,6 +41,7 @@ export function createBoardSharingRepository(
         select: {
           id: true,
           status: true,
+          role: true,
           createdAt: true,
           recipient: { select: { id: true, email: true, name: true } },
         },
@@ -57,6 +58,7 @@ export function createBoardSharingRepository(
         select: {
           id: true,
           status: true,
+          role: true,
           createdAt: true,
           owner: { select: { id: true, email: true, name: true } },
         },
@@ -70,6 +72,7 @@ export function createBoardSharingRepository(
         select: {
           id: true,
           status: true,
+          role: true,
           createdAt: true,
           owner: { select: { id: true, email: true, name: true } },
         },

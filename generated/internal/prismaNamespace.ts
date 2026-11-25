@@ -704,6 +704,7 @@ export const BoardShareScalarFieldEnum = {
   ownerId: 'ownerId',
   recipientId: 'recipientId',
   status: 'status',
+  role: 'role',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -787,6 +788,20 @@ export type EnumBoardShareStatusFieldRefInput<$PrismaModel> = FieldRefInputType<
  * Reference to a field of type 'BoardShareStatus[]'
  */
 export type ListEnumBoardShareStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'BoardShareStatus[]'>
+    
+
+
+/**
+ * Reference to a field of type 'BoardShareRole'
+ */
+export type EnumBoardShareRoleFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'BoardShareRole'>
+    
+
+
+/**
+ * Reference to a field of type 'BoardShareRole[]'
+ */
+export type ListEnumBoardShareRoleFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'BoardShareRole[]'>
     
 
 

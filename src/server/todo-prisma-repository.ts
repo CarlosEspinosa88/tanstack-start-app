@@ -2,6 +2,27 @@ import type { PrismaClient } from '../../generated/client'
 import type { TodoRepository } from './todo-operations'
 
 export function createTodoRepository(prisma: PrismaClient): TodoRepository {
+  function boardTodoAccess(actorId: string, boardOwnerId: string) {
+    return {
+      userId: boardOwnerId,
+      ...(actorId === boardOwnerId
+        ? {}
+        : {
+            user: {
+              is: {
+                ownedBoardShares: {
+                  some: {
+                    recipientId: actorId,
+                    status: 'ACCEPTED' as const,
+                    role: 'EDITOR' as const,
+                  },
+                },
+              },
+            },
+          }),
+    }
+  }
+
   return {
     count: (where) => prisma.todo.count({ where }),
     findPage: ({ where, skip, take }) =>
@@ -22,30 +43,53 @@ export function createTodoRepository(prisma: PrismaClient): TodoRepository {
 
       return todos.map((todo) => todo.createdAt)
     },
-    create: ({ title, userId, dueDate }) =>
-      prisma.todo.create({ data: { title, userId, dueDate } }),
-    updateOwned: async ({ id, userId, ...data }) => {
-      const result = await prisma.todo.updateMany({
-        where: { id, userId },
+    create: ({ title, actorId, boardOwnerId, dueDate }) => {
+      const data = { title, userId: boardOwnerId, dueDate }
+
+      if (actorId === boardOwnerId) {
+        return prisma.todo.create({ data })
+      }
+
+      return prisma.$transaction(async (transaction) => {
+        const share = await transaction.boardShare.findFirst({
+          where: {
+            ownerId: boardOwnerId,
+            recipientId: actorId,
+            status: 'ACCEPTED',
+            role: 'EDITOR',
+          },
+          select: { id: true },
+        })
+
+        if (!share) {
+          throw new Error('Board not found')
+        }
+
+        return transaction.todo.create({ data })
+      }, { isolationLevel: 'Serializable' })
+    },
+    updateOnBoard: async ({ id, actorId, boardOwnerId, ...data }) => {
+      const result = await prisma.todo.updateManyAndReturn({
+        where: { id, ...boardTodoAccess(actorId, boardOwnerId) },
         data,
       })
 
-      return result.count
-        ? prisma.todo.findFirstOrThrow({ where: { id, userId } })
-        : null
+      return result[0] ?? null
     },
-    deleteOwned: async ({ id, userId }) => {
-      const result = await prisma.todo.deleteMany({ where: { id, userId } })
+    deleteFromBoard: async ({ id, actorId, boardOwnerId }) => {
+      const result = await prisma.todo.deleteMany({
+        where: { id, ...boardTodoAccess(actorId, boardOwnerId) },
+      })
       return result.count > 0
     },
-    updateManyOwned: ({ ids, userId, done }) =>
+    updateManyOnBoard: ({ ids, actorId, boardOwnerId, done }) =>
       prisma.todo.updateMany({
-        where: { id: { in: ids }, userId },
+        where: { id: { in: ids }, ...boardTodoAccess(actorId, boardOwnerId) },
         data: { done },
       }).then((result) => result.count),
-    deleteManyOwned: ({ ids, userId }) =>
+    deleteManyFromBoard: ({ ids, actorId, boardOwnerId }) =>
       prisma.todo.deleteMany({
-        where: { id: { in: ids }, userId },
+        where: { id: { in: ids }, ...boardTodoAccess(actorId, boardOwnerId) },
       }).then((result) => result.count),
   }
 }

@@ -29,6 +29,7 @@ export type BoardShareMinAggregateOutputType = {
   ownerId: string | null
   recipientId: string | null
   status: $Enums.BoardShareStatus | null
+  role: $Enums.BoardShareRole | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -38,6 +39,7 @@ export type BoardShareMaxAggregateOutputType = {
   ownerId: string | null
   recipientId: string | null
   status: $Enums.BoardShareStatus | null
+  role: $Enums.BoardShareRole | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -47,6 +49,7 @@ export type BoardShareCountAggregateOutputType = {
   ownerId: number
   recipientId: number
   status: number
+  role: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -58,6 +61,7 @@ export type BoardShareMinAggregateInputType = {
   ownerId?: true
   recipientId?: true
   status?: true
+  role?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -67,6 +71,7 @@ export type BoardShareMaxAggregateInputType = {
   ownerId?: true
   recipientId?: true
   status?: true
+  role?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -76,6 +81,7 @@ export type BoardShareCountAggregateInputType = {
   ownerId?: true
   recipientId?: true
   status?: true
+  role?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -158,6 +164,7 @@ export type BoardShareGroupByOutputType = {
   ownerId: string
   recipientId: string
   status: $Enums.BoardShareStatus
+  role: $Enums.BoardShareRole
   createdAt: Date
   updatedAt: Date
   _count: BoardShareCountAggregateOutputType | null
@@ -188,6 +195,7 @@ export type BoardShareWhereInput = {
   ownerId?: Prisma.StringFilter<"BoardShare"> | string
   recipientId?: Prisma.StringFilter<"BoardShare"> | string
   status?: Prisma.EnumBoardShareStatusFilter<"BoardShare"> | $Enums.BoardShareStatus
+  role?: Prisma.EnumBoardShareRoleFilter<"BoardShare"> | $Enums.BoardShareRole
   createdAt?: Prisma.DateTimeFilter<"BoardShare"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"BoardShare"> | Date | string
   owner?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
@@ -199,6 +207,7 @@ export type BoardShareOrderByWithRelationInput = {
   ownerId?: Prisma.SortOrder
   recipientId?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  role?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   owner?: Prisma.UserOrderByWithRelationInput
@@ -214,6 +223,7 @@ export type BoardShareWhereUniqueInput = Prisma.AtLeast<{
   ownerId?: Prisma.StringFilter<"BoardShare"> | string
   recipientId?: Prisma.StringFilter<"BoardShare"> | string
   status?: Prisma.EnumBoardShareStatusFilter<"BoardShare"> | $Enums.BoardShareStatus
+  role?: Prisma.EnumBoardShareRoleFilter<"BoardShare"> | $Enums.BoardShareRole
   createdAt?: Prisma.DateTimeFilter<"BoardShare"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"BoardShare"> | Date | string
   owner?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
@@ -225,6 +235,7 @@ export type BoardShareOrderByWithAggregationInput = {
   ownerId?: Prisma.SortOrder
   recipientId?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  role?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.BoardShareCountOrderByAggregateInput
@@ -240,6 +251,7 @@ export type BoardShareScalarWhereWithAggregatesInput = {
   ownerId?: Prisma.StringWithAggregatesFilter<"BoardShare"> | string
   recipientId?: Prisma.StringWithAggregatesFilter<"BoardShare"> | string
   status?: Prisma.EnumBoardShareStatusWithAggregatesFilter<"BoardShare"> | $Enums.BoardShareStatus
+  role?: Prisma.EnumBoardShareRoleWithAggregatesFilter<"BoardShare"> | $Enums.BoardShareRole
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"BoardShare"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"BoardShare"> | Date | string
 }
@@ -247,6 +259,7 @@ export type BoardShareScalarWhereWithAggregatesInput = {
 export type BoardShareCreateInput = {
   id?: string
   status?: $Enums.BoardShareStatus
+  role?: $Enums.BoardShareRole
   createdAt?: Date | string
   updatedAt?: Date | string
   owner: Prisma.UserCreateNestedOneWithoutOwnedBoardSharesInput
@@ -258,6 +271,7 @@ export type BoardShareUncheckedCreateInput = {
   ownerId: string
   recipientId: string
   status?: $Enums.BoardShareStatus
+  role?: $Enums.BoardShareRole
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -265,6 +279,7 @@ export type BoardShareUncheckedCreateInput = {
 export type BoardShareUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumBoardShareStatusFieldUpdateOperationsInput | $Enums.BoardShareStatus
+  role?: Prisma.EnumBoardShareRoleFieldUpdateOperationsInput | $Enums.BoardShareRole
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   owner?: Prisma.UserUpdateOneRequiredWithoutOwnedBoardSharesNestedInput
@@ -276,6 +291,7 @@ export type BoardShareUncheckedUpdateInput = {
   ownerId?: Prisma.StringFieldUpdateOperationsInput | string
   recipientId?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumBoardShareStatusFieldUpdateOperationsInput | $Enums.BoardShareStatus
+  role?: Prisma.EnumBoardShareRoleFieldUpdateOperationsInput | $Enums.BoardShareRole
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -285,6 +301,7 @@ export type BoardShareCreateManyInput = {
   ownerId: string
   recipientId: string
   status?: $Enums.BoardShareStatus
+  role?: $Enums.BoardShareRole
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -292,6 +309,7 @@ export type BoardShareCreateManyInput = {
 export type BoardShareUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumBoardShareStatusFieldUpdateOperationsInput | $Enums.BoardShareStatus
+  role?: Prisma.EnumBoardShareRoleFieldUpdateOperationsInput | $Enums.BoardShareRole
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -301,6 +319,7 @@ export type BoardShareUncheckedUpdateManyInput = {
   ownerId?: Prisma.StringFieldUpdateOperationsInput | string
   recipientId?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumBoardShareStatusFieldUpdateOperationsInput | $Enums.BoardShareStatus
+  role?: Prisma.EnumBoardShareRoleFieldUpdateOperationsInput | $Enums.BoardShareRole
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -325,6 +344,7 @@ export type BoardShareCountOrderByAggregateInput = {
   ownerId?: Prisma.SortOrder
   recipientId?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  role?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -334,6 +354,7 @@ export type BoardShareMaxOrderByAggregateInput = {
   ownerId?: Prisma.SortOrder
   recipientId?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  role?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -343,6 +364,7 @@ export type BoardShareMinOrderByAggregateInput = {
   ownerId?: Prisma.SortOrder
   recipientId?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  role?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -435,9 +457,14 @@ export type EnumBoardShareStatusFieldUpdateOperationsInput = {
   set?: $Enums.BoardShareStatus
 }
 
+export type EnumBoardShareRoleFieldUpdateOperationsInput = {
+  set?: $Enums.BoardShareRole
+}
+
 export type BoardShareCreateWithoutOwnerInput = {
   id?: string
   status?: $Enums.BoardShareStatus
+  role?: $Enums.BoardShareRole
   createdAt?: Date | string
   updatedAt?: Date | string
   recipient: Prisma.UserCreateNestedOneWithoutReceivedBoardSharesInput
@@ -447,6 +474,7 @@ export type BoardShareUncheckedCreateWithoutOwnerInput = {
   id?: string
   recipientId: string
   status?: $Enums.BoardShareStatus
+  role?: $Enums.BoardShareRole
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -464,6 +492,7 @@ export type BoardShareCreateManyOwnerInputEnvelope = {
 export type BoardShareCreateWithoutRecipientInput = {
   id?: string
   status?: $Enums.BoardShareStatus
+  role?: $Enums.BoardShareRole
   createdAt?: Date | string
   updatedAt?: Date | string
   owner: Prisma.UserCreateNestedOneWithoutOwnedBoardSharesInput
@@ -473,6 +502,7 @@ export type BoardShareUncheckedCreateWithoutRecipientInput = {
   id?: string
   ownerId: string
   status?: $Enums.BoardShareStatus
+  role?: $Enums.BoardShareRole
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -511,6 +541,7 @@ export type BoardShareScalarWhereInput = {
   ownerId?: Prisma.StringFilter<"BoardShare"> | string
   recipientId?: Prisma.StringFilter<"BoardShare"> | string
   status?: Prisma.EnumBoardShareStatusFilter<"BoardShare"> | $Enums.BoardShareStatus
+  role?: Prisma.EnumBoardShareRoleFilter<"BoardShare"> | $Enums.BoardShareRole
   createdAt?: Prisma.DateTimeFilter<"BoardShare"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"BoardShare"> | Date | string
 }
@@ -535,6 +566,7 @@ export type BoardShareCreateManyOwnerInput = {
   id?: string
   recipientId: string
   status?: $Enums.BoardShareStatus
+  role?: $Enums.BoardShareRole
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -543,6 +575,7 @@ export type BoardShareCreateManyRecipientInput = {
   id?: string
   ownerId: string
   status?: $Enums.BoardShareStatus
+  role?: $Enums.BoardShareRole
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -550,6 +583,7 @@ export type BoardShareCreateManyRecipientInput = {
 export type BoardShareUpdateWithoutOwnerInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumBoardShareStatusFieldUpdateOperationsInput | $Enums.BoardShareStatus
+  role?: Prisma.EnumBoardShareRoleFieldUpdateOperationsInput | $Enums.BoardShareRole
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   recipient?: Prisma.UserUpdateOneRequiredWithoutReceivedBoardSharesNestedInput
@@ -559,6 +593,7 @@ export type BoardShareUncheckedUpdateWithoutOwnerInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   recipientId?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumBoardShareStatusFieldUpdateOperationsInput | $Enums.BoardShareStatus
+  role?: Prisma.EnumBoardShareRoleFieldUpdateOperationsInput | $Enums.BoardShareRole
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -567,6 +602,7 @@ export type BoardShareUncheckedUpdateManyWithoutOwnerInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   recipientId?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumBoardShareStatusFieldUpdateOperationsInput | $Enums.BoardShareStatus
+  role?: Prisma.EnumBoardShareRoleFieldUpdateOperationsInput | $Enums.BoardShareRole
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -574,6 +610,7 @@ export type BoardShareUncheckedUpdateManyWithoutOwnerInput = {
 export type BoardShareUpdateWithoutRecipientInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumBoardShareStatusFieldUpdateOperationsInput | $Enums.BoardShareStatus
+  role?: Prisma.EnumBoardShareRoleFieldUpdateOperationsInput | $Enums.BoardShareRole
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   owner?: Prisma.UserUpdateOneRequiredWithoutOwnedBoardSharesNestedInput
@@ -583,6 +620,7 @@ export type BoardShareUncheckedUpdateWithoutRecipientInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   ownerId?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumBoardShareStatusFieldUpdateOperationsInput | $Enums.BoardShareStatus
+  role?: Prisma.EnumBoardShareRoleFieldUpdateOperationsInput | $Enums.BoardShareRole
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -591,6 +629,7 @@ export type BoardShareUncheckedUpdateManyWithoutRecipientInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   ownerId?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumBoardShareStatusFieldUpdateOperationsInput | $Enums.BoardShareStatus
+  role?: Prisma.EnumBoardShareRoleFieldUpdateOperationsInput | $Enums.BoardShareRole
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -602,6 +641,7 @@ export type BoardShareSelect<ExtArgs extends runtime.Types.Extensions.InternalAr
   ownerId?: boolean
   recipientId?: boolean
   status?: boolean
+  role?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   owner?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -613,6 +653,7 @@ export type BoardShareSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Ex
   ownerId?: boolean
   recipientId?: boolean
   status?: boolean
+  role?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   owner?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -624,6 +665,7 @@ export type BoardShareSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Ex
   ownerId?: boolean
   recipientId?: boolean
   status?: boolean
+  role?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   owner?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -635,11 +677,12 @@ export type BoardShareSelectScalar = {
   ownerId?: boolean
   recipientId?: boolean
   status?: boolean
+  role?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type BoardShareOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "ownerId" | "recipientId" | "status" | "createdAt" | "updatedAt", ExtArgs["result"]["boardShare"]>
+export type BoardShareOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "ownerId" | "recipientId" | "status" | "role" | "createdAt" | "updatedAt", ExtArgs["result"]["boardShare"]>
 export type BoardShareInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   owner?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   recipient?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -664,6 +707,7 @@ export type $BoardSharePayload<ExtArgs extends runtime.Types.Extensions.Internal
     ownerId: string
     recipientId: string
     status: $Enums.BoardShareStatus
+    role: $Enums.BoardShareRole
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["boardShare"]>
@@ -1095,6 +1139,7 @@ export interface BoardShareFieldRefs {
   readonly ownerId: Prisma.FieldRef<"BoardShare", 'String'>
   readonly recipientId: Prisma.FieldRef<"BoardShare", 'String'>
   readonly status: Prisma.FieldRef<"BoardShare", 'BoardShareStatus'>
+  readonly role: Prisma.FieldRef<"BoardShare", 'BoardShareRole'>
   readonly createdAt: Prisma.FieldRef<"BoardShare", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"BoardShare", 'DateTime'>
 }

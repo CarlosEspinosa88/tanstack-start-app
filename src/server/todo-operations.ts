@@ -37,22 +37,33 @@ export type TodoRepository = {
   create(args: {
     title: string
     dueDate?: Date
-    userId: string
+    actorId: string
+    boardOwnerId: string
   }): Promise<TodoRecord>
-  updateOwned(args: {
+  updateOnBoard(args: {
     id: string
-    userId: string
+    actorId: string
+    boardOwnerId: string
     title?: string
     done?: boolean
     dueDate?: Date | null
   }): Promise<TodoRecord | null>
-  deleteOwned(args: { id: string; userId: string }): Promise<boolean>
-  updateManyOwned(args: {
+  deleteFromBoard(args: {
+    id: string
+    actorId: string
+    boardOwnerId: string
+  }): Promise<boolean>
+  updateManyOnBoard(args: {
     ids: string[]
-    userId: string
+    actorId: string
+    boardOwnerId: string
     done: boolean
   }): Promise<number>
-  deleteManyOwned(args: { ids: string[]; userId: string }): Promise<number>
+  deleteManyFromBoard(args: {
+    ids: string[]
+    actorId: string
+    boardOwnerId: string
+  }): Promise<number>
 }
 
 const pageSize = 20
@@ -99,18 +110,20 @@ export async function getTodoDashboardData(
   }
 }
 
-export async function createOwnedTodo(
+export async function createBoardTodo(
   repository: TodoRepository,
-  userId: string,
+  actorId: string,
+  boardOwnerId: string,
   title: string,
   dueDate?: Date,
 ) {
-  return repository.create({ title, dueDate, userId })
+  return repository.create({ title, dueDate, actorId, boardOwnerId })
 }
 
-export async function updateOwnedTodo(
+export async function updateBoardTodo(
   repository: TodoRepository,
-  userId: string,
+  actorId: string,
+  boardOwnerId: string,
   input: {
     id: string
     title?: string
@@ -118,7 +131,7 @@ export async function updateOwnedTodo(
     dueDate?: Date | null
   },
 ) {
-  const todo = await repository.updateOwned({ ...input, userId })
+  const todo = await repository.updateOnBoard({ ...input, actorId, boardOwnerId })
 
   if (!todo) {
     throw new Error('Todo not found')
@@ -127,31 +140,34 @@ export async function updateOwnedTodo(
   return todo
 }
 
-export async function deleteOwnedTodo(
+export async function deleteBoardTodo(
   repository: TodoRepository,
-  userId: string,
+  actorId: string,
+  boardOwnerId: string,
   id: string,
 ) {
-  const deleted = await repository.deleteOwned({ id, userId })
+  const deleted = await repository.deleteFromBoard({ id, actorId, boardOwnerId })
 
   if (!deleted) {
     throw new Error('Todo not found')
   }
 }
 
-export function updateOwnedTodos(
+export function updateBoardTodos(
   repository: TodoRepository,
-  userId: string,
+  actorId: string,
+  boardOwnerId: string,
   ids: string[],
   done: boolean,
 ) {
-  return repository.updateManyOwned({ ids, userId, done })
+  return repository.updateManyOnBoard({ ids, actorId, boardOwnerId, done })
 }
 
-export function deleteOwnedTodos(
+export function deleteBoardTodos(
   repository: TodoRepository,
-  userId: string,
+  actorId: string,
+  boardOwnerId: string,
   ids: string[],
 ) {
-  return repository.deleteManyOwned({ ids, userId })
+  return repository.deleteManyFromBoard({ ids, actorId, boardOwnerId })
 }

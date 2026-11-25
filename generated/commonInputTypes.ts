@@ -155,6 +155,13 @@ export type EnumBoardShareStatusFilter<$PrismaModel = never> = {
   not?: Prisma.NestedEnumBoardShareStatusFilter<$PrismaModel> | $Enums.BoardShareStatus
 }
 
+export type EnumBoardShareRoleFilter<$PrismaModel = never> = {
+  equals?: $Enums.BoardShareRole | Prisma.EnumBoardShareRoleFieldRefInput<$PrismaModel>
+  in?: $Enums.BoardShareRole[] | Prisma.ListEnumBoardShareRoleFieldRefInput<$PrismaModel>
+  notIn?: $Enums.BoardShareRole[] | Prisma.ListEnumBoardShareRoleFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumBoardShareRoleFilter<$PrismaModel> | $Enums.BoardShareRole
+}
+
 export type EnumBoardShareStatusWithAggregatesFilter<$PrismaModel = never> = {
   equals?: $Enums.BoardShareStatus | Prisma.EnumBoardShareStatusFieldRefInput<$PrismaModel>
   in?: $Enums.BoardShareStatus[] | Prisma.ListEnumBoardShareStatusFieldRefInput<$PrismaModel>
@@ -163,6 +170,16 @@ export type EnumBoardShareStatusWithAggregatesFilter<$PrismaModel = never> = {
   _count?: Prisma.NestedIntFilter<$PrismaModel>
   _min?: Prisma.NestedEnumBoardShareStatusFilter<$PrismaModel>
   _max?: Prisma.NestedEnumBoardShareStatusFilter<$PrismaModel>
+}
+
+export type EnumBoardShareRoleWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.BoardShareRole | Prisma.EnumBoardShareRoleFieldRefInput<$PrismaModel>
+  in?: $Enums.BoardShareRole[] | Prisma.ListEnumBoardShareRoleFieldRefInput<$PrismaModel>
+  notIn?: $Enums.BoardShareRole[] | Prisma.ListEnumBoardShareRoleFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumBoardShareRoleWithAggregatesFilter<$PrismaModel> | $Enums.BoardShareRole
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumBoardShareRoleFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumBoardShareRoleFilter<$PrismaModel>
 }
 
 export type NestedStringFilter<$PrismaModel = never> = {
@@ -319,6 +336,13 @@ export type NestedEnumBoardShareStatusFilter<$PrismaModel = never> = {
   not?: Prisma.NestedEnumBoardShareStatusFilter<$PrismaModel> | $Enums.BoardShareStatus
 }
 
+export type NestedEnumBoardShareRoleFilter<$PrismaModel = never> = {
+  equals?: $Enums.BoardShareRole | Prisma.EnumBoardShareRoleFieldRefInput<$PrismaModel>
+  in?: $Enums.BoardShareRole[] | Prisma.ListEnumBoardShareRoleFieldRefInput<$PrismaModel>
+  notIn?: $Enums.BoardShareRole[] | Prisma.ListEnumBoardShareRoleFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumBoardShareRoleFilter<$PrismaModel> | $Enums.BoardShareRole
+}
+
 export type NestedEnumBoardShareStatusWithAggregatesFilter<$PrismaModel = never> = {
   equals?: $Enums.BoardShareStatus | Prisma.EnumBoardShareStatusFieldRefInput<$PrismaModel>
   in?: $Enums.BoardShareStatus[] | Prisma.ListEnumBoardShareStatusFieldRefInput<$PrismaModel>
@@ -327,6 +351,16 @@ export type NestedEnumBoardShareStatusWithAggregatesFilter<$PrismaModel = never>
   _count?: Prisma.NestedIntFilter<$PrismaModel>
   _min?: Prisma.NestedEnumBoardShareStatusFilter<$PrismaModel>
   _max?: Prisma.NestedEnumBoardShareStatusFilter<$PrismaModel>
+}
+
+export type NestedEnumBoardShareRoleWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.BoardShareRole | Prisma.EnumBoardShareRoleFieldRefInput<$PrismaModel>
+  in?: $Enums.BoardShareRole[] | Prisma.ListEnumBoardShareRoleFieldRefInput<$PrismaModel>
+  notIn?: $Enums.BoardShareRole[] | Prisma.ListEnumBoardShareRoleFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumBoardShareRoleWithAggregatesFilter<$PrismaModel> | $Enums.BoardShareRole
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumBoardShareRoleFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumBoardShareRoleFilter<$PrismaModel>
 }
 
 

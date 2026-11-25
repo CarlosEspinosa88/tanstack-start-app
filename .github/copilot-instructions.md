@@ -17,7 +17,7 @@ Use `AGENTS.md` as the repository operating contract. This file adds Copilot-spe
 - Do not apply Next.js conventions to this project. Use the installed TanStack Start and TanStack Router APIs and inspect the current version's patterns.
 - Follow the existing separation between file-based route modules, server functions, domain operations, Prisma repositories, and Zod validators.
 - A server function is a trust boundary. Validate input with the existing Zod schemas and authenticate the caller inside the server-side handler.
-- Todo persistence must remain user-scoped. Preserve `userId` filters in all reads and writes. For shared boards, preserve the accepted `BoardShare` relationship check. Viewing a shared board does not imply permission to mutate the owner's todos.
+- Todo persistence must remain user-scoped. Preserve `userId` filters in all reads and writes. For shared boards, preserve the accepted `BoardShare` relationship check. `VIEWER` shares are read-only; only accepted `EDITOR` shares permit mutations, and those writes must remain scoped to the board owner and authorized in the repository query.
 - Preserve Google OAuth state validation, verified-email checks, JWT verification, and secure cookie attributes. Never expose OAuth tokens, JWTs, or secrets to browser code or logs.
 - Prisma uses PostgreSQL and its client generator writes to `generated/`. Never hand-edit `generated/` or `src/routeTree.gen.ts`.
 - Prisma migration history is immutable after application. Prefer additive/expand-and-contract migrations and document rollout/rollback considerations.

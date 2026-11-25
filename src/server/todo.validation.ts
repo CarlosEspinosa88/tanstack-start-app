@@ -3,10 +3,12 @@ import { z } from 'zod'
 export const CreateTodoInput = z.object({
   title: z.string().trim().min(1).max(140),
   dueDate: z.iso.date().optional(),
+  boardOwnerId: z.string().min(1).optional(),
 })
 
 export const UpdateTodoInput = z.object({
   id: z.string().min(1),
+  boardOwnerId: z.string().min(1).optional(),
   title: z.string().trim().min(1).max(140).optional(),
   done: z.boolean().optional(),
   dueDate: z.iso.date().nullable().optional(),
@@ -20,6 +22,7 @@ export const UpdateTodoInput = z.object({
 
 export const DeleteTodoInput = z.object({
   id: z.string().min(1),
+  boardOwnerId: z.string().min(1).optional(),
 })
 
 export const TodoListInput = z.object({
@@ -38,8 +41,10 @@ const TodoIds = z.array(z.string().min(1)).min(1).max(20).refine(
 export const UpdateTodosInput = z.object({
   ids: TodoIds,
   done: z.boolean(),
+  boardOwnerId: z.string().min(1).optional(),
 })
 
 export const DeleteTodosInput = z.object({
   ids: TodoIds,
+  boardOwnerId: z.string().min(1).optional(),
 })

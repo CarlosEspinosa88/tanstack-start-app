@@ -5,6 +5,7 @@ import {
   inviteToBoard,
   respondToBoardInvitation,
   revokeBoardShare,
+  type BoardShareRole,
   type BoardShareStatus,
   type BoardSharingRepository,
 } from './board-sharing'
@@ -19,8 +20,8 @@ function createRepository(
 ) {
   const calls: {
     email?: string
-    created?: [string, string]
-    resetId?: string
+    created?: [string, string, BoardShareRole]
+    reset?: [string, BoardShareRole]
     response?: [string, string, 'ACCEPTED' | 'DECLINED']
     revoke?: [string, string]
   } = {}
@@ -31,11 +32,11 @@ function createRepository(
       return email === 'invitee@example.com' ? { id: 'user-b' } : null
     },
     findShare: async () => existingShare,
-    createShare: async (ownerId, recipientId) => {
-      calls.created = [ownerId, recipientId]
+    createShare: async (ownerId, recipientId, role) => {
+      calls.created = [ownerId, recipientId, role]
     },
-    resetShareToPending: async (id) => {
-      calls.resetId = id
+    resetShareToPending: async (id, role) => {
+      calls.reset = [id, role]
       return true
     },
     listOwnerShares: async () => [],
@@ -65,10 +66,10 @@ function createRepository(
 test('board invitations resolve the recipient account and normalize email', async () => {
   const { repository, calls } = createRepository()
 
-  await inviteToBoard(repository, 'user-a', ' Invitee@Example.com ')
+  await inviteToBoard(repository, 'user-a', ' Invitee@Example.com ', 'EDITOR')
 
   assert.equal(calls.email, 'invitee@example.com')
-  assert.deepEqual(calls.created, ['user-a', 'user-b'])
+  assert.deepEqual(calls.created, ['user-a', 'user-b', 'EDITOR'])
 })
 
 test('board invitations reject unknown users, self-invites, and duplicates', async () => {
@@ -78,22 +79,22 @@ test('board invitations reject unknown users, self-invites, and duplicates', asy
   }).repository
 
   await assert.rejects(
-    inviteToBoard(repository, 'user-a', 'missing@example.com'),
+    inviteToBoard(repository, 'user-a', 'missing@example.com', 'VIEWER'),
     { message: 'No account was found for that email address' },
   )
   await assert.rejects(
-    inviteToBoard(selfRepository, 'user-a', 'owner@example.com'),
+    inviteToBoard(selfRepository, 'user-a', 'owner@example.com', 'VIEWER'),
     { message: 'You cannot invite yourself' },
   )
 
   setExistingShare({ id: 'share-1', status: 'PENDING' })
   await assert.rejects(
-    inviteToBoard(repository, 'user-a', 'invitee@example.com'),
+    inviteToBoard(repository, 'user-a', 'invitee@example.com', 'VIEWER'),
     { message: 'An invitation is already pending for that user' },
   )
   setExistingShare({ id: 'share-1', status: 'ACCEPTED' })
   await assert.rejects(
-    inviteToBoard(repository, 'user-a', 'invitee@example.com'),
+    inviteToBoard(repository, 'user-a', 'invitee@example.com', 'VIEWER'),
     { message: 'This board is already shared with that user' },
   )
 })
@@ -102,9 +103,9 @@ test('declined or revoked invitations can be sent again', async () => {
   const { repository, calls, setExistingShare } = createRepository()
   setExistingShare({ id: 'share-1', status: 'DECLINED' })
 
-  await inviteToBoard(repository, 'user-a', 'invitee@example.com')
+  await inviteToBoard(repository, 'user-a', 'invitee@example.com', 'EDITOR')
 
-  assert.equal(calls.resetId, 'share-1')
+  assert.deepEqual(calls.reset, ['share-1', 'EDITOR'])
 })
 
 test('board access requires an accepted share and always allows its owner', async () => {
@@ -134,7 +135,14 @@ test('invitation responses and revocation include the authenticated user id', as
 test('board sharing inputs validate email and invitation state changes', () => {
   assert.deepEqual(
     InviteToBoardInput.parse({ email: ' person@example.com ' }),
-    { email: 'person@example.com' },
+    { email: 'person@example.com', role: 'VIEWER' },
+  )
+  assert.deepEqual(
+    InviteToBoardInput.parse({
+      email: 'person@example.com',
+      role: 'EDITOR',
+    }),
+    { email: 'person@example.com', role: 'EDITOR' },
   )
   assert.equal(InviteToBoardInput.safeParse({ email: 'not-an-email' }).success, false)
   assert.equal(
