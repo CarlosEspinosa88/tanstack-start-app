@@ -117,6 +117,12 @@ test.describe('authenticated dashboard', () => {
     ])
   })
 
+  test('tasks route requires an authenticated session', async ({ page }) => {
+    await page.context().clearCookies()
+    await page.goto('/tasks')
+    await expect(page).toHaveURL(/\/login/)
+  })
+
   test('dashboard remains keyboard-accessible without overflow across viewports', async ({
     page,
   }) => {
@@ -124,12 +130,14 @@ test.describe('authenticated dashboard', () => {
 
     await page.keyboard.press('Tab')
     await expect(page.getByRole('link', { name: 'Skip to tasks' })).toBeFocused()
+    await expect(page.getByRole('link', { name: 'My tasks' })).toBeVisible()
+    await expect(page.getByLabel('Activity period')).toBeVisible()
+    await page.goto('/tasks')
     await expect(page.getByRole('heading', { name: 'Your tasks' })).toBeVisible()
     await expect(page.getByRole('searchbox', { name: 'Search tasks' })).toBeVisible()
     await expect(
       page.getByRole('checkbox', { name: 'Select all tasks on this page' }),
     ).toBeVisible()
-    await expect(page.getByLabel('Activity period')).toBeVisible()
 
     for (const viewport of [
       { width: 1280, height: 900 },
@@ -144,10 +152,10 @@ test.describe('authenticated dashboard', () => {
   })
 
   test('search and reporting period are persisted in the URL', async ({ page }) => {
-    await page.goto('/')
+    await page.goto('/tasks')
     const search = page.getByRole('searchbox', { name: 'Search tasks' })
     await search.fill(taskTitle)
-    await page.getByRole('button', { name: 'Search' }).click()
+    await page.getByRole('button', { name: 'Search', exact: true }).click()
     await expect(page).toHaveURL(new RegExp(`search=${taskTitle}`))
     await expect(page.locator('.task-row').filter({ hasText: taskTitle })).toBeVisible()
 
@@ -156,6 +164,7 @@ test.describe('authenticated dashboard', () => {
       .poll(() => new URL(page.url()).searchParams.get('search'))
       .toBeFalsy()
 
+    await page.goto('/')
     await page.getByLabel('Activity period').selectOption('30d')
     await expect.poll(() => new URL(page.url()).searchParams.get('period')).toBe('30d')
     await expect(
@@ -168,7 +177,7 @@ test.describe('authenticated dashboard', () => {
     test.use({ javaScriptEnabled: false })
 
     test('selection controls are disabled', async ({ page }) => {
-      await page.goto('/')
+      await page.goto('/tasks')
       await expect(
         page.getByRole('checkbox', { name: 'Select all tasks on this page' }),
       ).toBeDisabled()
@@ -179,7 +188,7 @@ test.describe('authenticated dashboard', () => {
   })
 
   test('selected tasks can be completed and deleted in bulk', async ({ page }) => {
-    await page.goto('/')
+    await page.goto('/tasks')
     const row = page.locator('.task-row').filter({ hasText: taskTitle })
     await row.getByRole('checkbox', { name: `Select task: ${taskTitle}` }).check()
     await page.getByRole('button', { name: 'Mark complete', exact: true }).click()
@@ -194,7 +203,7 @@ test.describe('authenticated dashboard', () => {
   test('editors can create, edit, complete, and delete shared-board tasks', async ({
     page,
   }) => {
-    await page.goto(`/?board=${sharedOwnerId}`)
+    await page.goto(`/tasks?board=${sharedOwnerId}`)
 
     await expect(
       page.getByText('You can create, edit, complete, and delete tasks on this board.'),
@@ -225,7 +234,7 @@ test.describe('authenticated dashboard', () => {
   })
 
   test('viewers see shared tasks without mutation controls', async ({ page }) => {
-    await page.goto(`/?board=${viewerOwnerId}`)
+    await page.goto(`/tasks?board=${viewerOwnerId}`)
 
     await expect(
       page.getByText('These tasks are visible to you but cannot be changed.'),
