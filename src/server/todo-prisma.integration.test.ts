@@ -81,6 +81,28 @@ test(
       })
 
       const repository = createTodoRepository(prisma)
+      await prisma.todo.createMany({
+        data: [
+          ...Array.from({ length: 21 }, (_, index) => ({
+            title: `Date filter ${index}`, userId: firstUser.id,
+            dueDate: new Date('2024-02-29T00:00:00.000Z'),
+          })),
+          { title: 'No date', userId: firstUser.id },
+          { title: 'Next day', userId: firstUser.id, dueDate: new Date('2024-03-01T00:00:00.000Z') },
+          { title: 'Other board', userId: secondUser.id, dueDate: new Date('2024-02-29T00:00:00.000Z') },
+        ],
+      })
+      const datePage = await getTodoDashboardData(repository, firstUser.id, {
+        page: 2, status: 'all', search: 'Date filter', dueDate: '2024-02-29', month: '2024-02',
+      })
+      assert.equal(datePage.pagination.total, 21)
+      assert.equal(datePage.todos.length, 1)
+      assert.deepEqual(datePage.calendar.dueDateCounts, [{ date: '2024-02-29', count: 21 }])
+      const unfiltered = await getTodoDashboardData(repository, firstUser.id, {
+        page: 1, status: 'all', search: 'No date', month: '2024-02',
+      })
+      assert.equal(unfiltered.todos.length, 1)
+      await prisma.todo.deleteMany({ where: { userId: { in: [firstUser.id, secondUser.id] } } })
       const dueDate = new Date('2026-12-01T00:00:00.000Z')
       const todo = await createBoardTodo(
         repository,

@@ -5,6 +5,7 @@ import {
   useRouter,
 } from '@tanstack/react-router'
 import { TaskManager } from '../components/TaskManager'
+import { SidebarCalendar } from '../components/SidebarCalendar'
 import {
   dashboardSearchSchema,
   loadDashboard,
@@ -51,6 +52,14 @@ function TasksRoute() {
             <button type="submit">Sign out</button>
           </form>
         </nav>
+        <SidebarCalendar
+          {...dashboard.calendar}
+          selectedDate={query.dueDate}
+          onMonthChange={(month) => void navigate({ search: { ...query, month } })}
+          onSelectDate={(dueDate) => void navigate({
+            search: { ...query, month: dashboard.calendar.month, dueDate, page: 1 },
+          })}
+        />
         <div className="sidebar-bottom">
           {user.picture ? (
             <img className="avatar" src={user.picture} alt="" />

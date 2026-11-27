@@ -236,10 +236,83 @@ test.describe('authenticated dashboard', () => {
       page.getByRole('button', { name: /In progress/ }),
     ).toHaveAttribute('aria-pressed', 'true')
     await expect(page.getByText('Page 1 of 2')).toBeVisible()
-    await page.getByRole('button', { name: 'Next' }).click()
+    await page.getByRole('button', { name: 'Next', exact: true }).click()
     await expect(page).toHaveURL(/page=2/)
     await expect(page.getByText('Page 2 of 2')).toBeVisible()
     await expect(page.locator('.task-row')).toHaveCount(1)
+  })
+
+  test('calendar navigates months and filters the whole board while preserving URL context', async ({ page }) => {
+      assert.ok(prisma)
+      const prefix = `calendar-${randomUUID()}`
+      await prisma.todo.createMany({
+        data: Array.from({ length: 21 }, (_, index) => ({
+          title: `${prefix}-${index}`, userId, dueDate: new Date('2024-02-29T00:00:00.000Z'),
+        })),
+      })
+      await page.goto(`/?month=2024-01&status=open&search=${prefix}&period=30d`)
+      const calendar = page.getByRole('region', { name: 'Task due date calendar' })
+      await expect(calendar.getByText('No tasks due this month.')).toBeVisible()
+      await calendar.getByRole('button', { name: 'Next month' }).click()
+      await expect(calendar.getByText('February 2024')).toBeVisible()
+      const day = calendar.getByRole('button', { name: 'Thursday, February 29, 2024, 21 tasks due' })
+      await day.focus()
+      await page.keyboard.press('Enter')
+      await expect(page).toHaveURL(/\/tasks\?/)
+      await expect.poll(() => new URL(page.url()).searchParams.get('dueDate')).toBe('2024-02-29')
+      await expect.poll(() => new URL(page.url()).searchParams.get('search')).toBe(prefix)
+      await expect.poll(() => new URL(page.url()).searchParams.get('period')).toBe('30d')
+      await expect(day).toHaveAttribute('aria-pressed', 'true')
+      await expect(page.getByText('Page 1 of 2')).toBeVisible()
+      await page.getByRole('button', { name: 'Next', exact: true }).click()
+      await expect(page.locator('.task-row')).toHaveCount(1)
+      await calendar.getByRole('button', { name: 'Friday, February 23, 2024, 0 tasks due' }).click()
+      await expect(page.getByText('No tasks match this view.')).toBeVisible()
+      await calendar.getByRole('button', { name: 'Clear date' }).click()
+      await expect.poll(() => new URL(page.url()).searchParams.get('dueDate')).toBeNull()
+      await expect(page.getByText('Page 1 of 2')).toBeVisible()
+      await calendar.getByRole('button', { name: 'Previous month' }).click()
+      await expect(calendar.getByText('January 2024')).toBeVisible()
+  })
+
+  test('calendar respects shared viewer access and keeps controls read-only', async ({ page }) => {
+      assert.ok(prisma)
+      await prisma.todo.updateMany({
+        where: { userId: viewerOwnerId },
+        data: { dueDate: new Date('2024-12-31T00:00:00.000Z') },
+      })
+      await page.goto(`/tasks?board=${viewerOwnerId}&month=2024-12`)
+      const calendar = page.getByRole('region', { name: 'Task due date calendar' })
+      await calendar.getByRole('button', { name: 'Tuesday, December 31, 2024, 1 task due' }).click()
+      await expect.poll(() => new URL(page.url()).searchParams.get('board')).toBe(viewerOwnerId)
+      await expect(page.locator('.task-row').filter({ hasText: viewerTaskTitle })).toBeVisible()
+      await expect(page.getByPlaceholder('Add a task')).toHaveCount(0)
+      await expect(page.getByRole('button', { name: 'Edit', exact: true })).toHaveCount(0)
+      await calendar.getByRole('button', { name: 'Next month' }).click()
+      await expect(calendar.getByText('January 2025')).toBeVisible()
+      await expect(calendar.getByText('No tasks due this month.')).toBeVisible()
+      await page.goto('/tasks?board=not-a-real-board&month=2024-12&dueDate=2024-12-31')
+      await expect(page.getByRole('heading', { name: 'Tasks are unavailable' })).toBeVisible()
+  })
+
+  test('editing a selected task out of a date view clears bulk selection', async ({ page }) => {
+    assert.ok(prisma)
+    await prisma.todo.updateMany({
+      where: { userId, title: taskTitle },
+      data: { dueDate: new Date('2024-02-29T00:00:00.000Z') },
+    })
+    await page.goto(`/tasks?dueDate=2024-02-29&search=${taskTitle}`)
+    const row = page.locator('.task-row').filter({ hasText: taskTitle })
+    await row.getByRole('checkbox', { name: `Select task: ${taskTitle}` }).check()
+    await row.getByRole('button', { name: 'Edit', exact: true }).click()
+    await page.getByLabel(`Due date for task: ${taskTitle}`).fill('2024-03-01')
+    await page.getByRole('button', { name: 'Save' }).click()
+    await expect(row).toHaveCount(0)
+    await expect(page.getByRole('button', { name: 'Delete selected' })).toHaveCount(0)
+    const calendar = page.getByRole('region', { name: 'Task due date calendar' })
+    await calendar.getByRole('button', { name: 'Clear date' }).click()
+    await expect(calendar.getByText('February 2024')).toBeVisible()
+    await expect(row).toBeVisible()
   })
 
   test('empty boards and filtered no-result states are distinct', async ({ page }) => {
@@ -312,7 +385,7 @@ test.describe('authenticated dashboard', () => {
       await expect(page.getByRole('checkbox', { name: `Select task: ${prefix}`, exact: false }).first()).toBeDisabled()
       await expect(page.getByRole('button', { name: /In progress/ })).toBeDisabled()
       await expect(page.getByText('Page 1 of 2')).toBeVisible()
-      await expect(page.getByRole('button', { name: 'Next' })).toBeDisabled()
+      await expect(page.getByRole('button', { name: 'Next', exact: true })).toBeDisabled()
     })
   })
 

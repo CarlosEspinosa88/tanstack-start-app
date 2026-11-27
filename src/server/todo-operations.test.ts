@@ -27,6 +27,7 @@ function createRepository(overrides: Partial<TodoRepository> = {}) {
     summaryUserId?: string
     page?: { where: TodoWhere; skip: number; take: number }
     activity?: { userId: string; startDate: Date; exclusiveEndDate: Date }
+    dueDates?: { userId: string; start: Date; end: Date }
     created?: {
       title: string
       dueDate?: Date
@@ -70,6 +71,10 @@ function createRepository(overrides: Partial<TodoRepository> = {}) {
     },
     findActivityDates: async (args) => {
       calls.activity = args
+      return []
+    },
+    findDueDateCounts: async (args) => {
+      calls.dueDates = args
       return []
     },
     create: async (args) => {
@@ -149,6 +154,23 @@ test('dashboard requests the selected activity period', async () => {
     exclusiveEndDate: new Date('2026-11-20T00:00:00.000Z'),
   })
   assert.equal(dashboard.activity.length, 30)
+})
+
+test('date filter scopes count and page while month markers cover the whole board', async () => {
+  const { repository, calls } = createRepository()
+  await getTodoDashboardData(repository, 'owner', {
+    page: 2, status: 'open', search: 'plan', dueDate: '2024-02-29', month: '2024-12',
+  })
+  const where = {
+    userId: 'owner', done: false, title: { contains: 'plan' },
+    dueDate: new Date('2024-02-29T00:00:00.000Z'),
+  }
+  assert.deepEqual(calls.counts, [where])
+  assert.deepEqual(calls.page, { where, skip: 20, take: 20 })
+  assert.deepEqual(calls.dueDates, {
+    userId: 'owner', start: new Date('2024-12-01T00:00:00.000Z'),
+    end: new Date('2025-01-01T00:00:00.000Z'),
+  })
 })
 
 test('create, update, and delete carry the actor and board owner separately', async () => {
