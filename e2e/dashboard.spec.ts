@@ -205,8 +205,12 @@ test.describe('authenticated dashboard', () => {
     await sharedRow.getByRole('checkbox', { name: `Select task: ${sharedTaskTitle}` }).check()
     await expect(page.getByRole('button', { name: 'Mark complete', exact: true })).toBeVisible()
     await page.getByLabel('Choose a board').selectOption({ label: 'My board' })
+    await expect.poll(() => new URL(page.url()).searchParams.get('board')).toBeNull()
+    await expect(page.getByRole('heading', { name: 'Your task manager' })).toBeVisible()
     await expect(page.getByRole('button', { name: 'Mark complete', exact: true })).toHaveCount(0)
     await page.getByLabel('Choose a board').selectOption(sharedOwnerId)
+    await expect(page).toHaveURL(new RegExp(`/tasks\\?.*board=${sharedOwnerId}`))
+    await expect(sharedRow).toBeVisible()
 
     await page.getByRole('link', { name: 'Overview', exact: true }).click()
     await expect(page).toHaveURL(new RegExp(`/\\?.*board=${sharedOwnerId}`))
@@ -292,14 +296,23 @@ test.describe('authenticated dashboard', () => {
   test.describe('before hydration', () => {
     test.use({ javaScriptEnabled: false })
 
-    test('selection controls are disabled', async ({ page }) => {
-      await page.goto('/tasks')
+    test('interactive task controls are disabled', async ({ page }) => {
+      assert.ok(prisma)
+      const prefix = `unhydrated-pagination-${randomUUID()}`
+      await prisma.todo.createMany({
+        data: Array.from({ length: 21 }, (_, index) => ({
+          title: `${prefix}-${index}`,
+          userId,
+        })),
+      })
+      await page.goto(`/tasks?search=${prefix}`)
       await expect(
         page.getByRole('checkbox', { name: 'Select all tasks on this page' }),
       ).toBeDisabled()
-      await expect(
-        page.getByRole('checkbox', { name: `Select task: ${taskTitle}` }),
-      ).toBeDisabled()
+      await expect(page.getByRole('checkbox', { name: `Select task: ${prefix}`, exact: false }).first()).toBeDisabled()
+      await expect(page.getByRole('button', { name: /In progress/ })).toBeDisabled()
+      await expect(page.getByText('Page 1 of 2')).toBeVisible()
+      await expect(page.getByRole('button', { name: 'Next' })).toBeDisabled()
     })
   })
 

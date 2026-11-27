@@ -342,6 +342,7 @@ export function TaskManager({
             onClick={() => void navigateToTasks({ status: value })}
             type="button"
             aria-pressed={query.status === value}
+            disabled={!isHydrated}
           >
             {label}
           </button>
@@ -445,7 +446,7 @@ export function TaskManager({
         </span>
         <span className="pagination-controls">
           <button
-            disabled={pagination.page <= 1}
+            disabled={!isHydrated || pagination.page <= 1}
             onClick={() => void navigateToTasks({ page: pagination.page - 1 })}
             type="button"
           >
@@ -453,7 +454,7 @@ export function TaskManager({
           </button>
           <span>Page {pagination.page} of {pagination.pageCount}</span>
           <button
-            disabled={pagination.page >= pagination.pageCount}
+            disabled={!isHydrated || pagination.page >= pagination.pageCount}
             onClick={() => void navigateToTasks({ page: pagination.page + 1 })}
             type="button"
           >
