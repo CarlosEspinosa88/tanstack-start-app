@@ -110,6 +110,10 @@ h1 { margin-bottom: 7px; font: 700 25px Inter, ui-sans-serif, sans-serif; letter
 .panel-heading, .tasks-heading { display: flex; align-items: flex-start; justify-content: space-between; }
 .panel h2, .tasks-heading h2 { margin: 0 0 5px; font: 700 14px Inter, ui-sans-serif, sans-serif; letter-spacing: -.2px; }
 .panel-heading p, .tasks-heading p { margin: 0; color: #9998a8; font-size: 10px; }
+.primary-link, .secondary-link { display: inline-flex; align-items: center; padding: 8px 11px; border-radius: 7px; font-size: 10px; font-weight: 600; }
+.primary-link { color: #fff; background: #7658e8; }
+.secondary-link { border: 1px solid #eae9f1; color: #6e52d5; background: #fff; }
+.primary-link:hover, .secondary-link:hover { filter: brightness(.97); }
 .panel-period { padding: 6px 8px; border: 1px solid #efedf4; border-radius: 6px; color: #828194; font-size: 9px; }
 .chart { display: flex; height: 143px; align-items: stretch; justify-content: space-between; gap: 9px; margin-top: 15px; }
 .chart-column { display: flex; flex: 1; flex-direction: column; align-items: center; }
@@ -193,6 +197,9 @@ h1 { margin-bottom: 7px; font: 700 25px Inter, ui-sans-serif, sans-serif; letter
 .pagination-controls { display: flex; align-items: center; gap: 8px; }
 .dashboard-footer { padding: 15px 2px 0; color: #a1a0ae; font-size: 9px; }
 .dashboard-footer code { padding: 2px 4px; border-radius: 4px; background: #eeedf4; font-size: 9px; }
+.route-state { display: grid; min-height: 100vh; place-items: center; align-content: center; gap: 8px; padding: 24px; color: #77768c; text-align: center; }
+.route-state h1 { margin: 0; color: #24243a; font-size: 22px; }
+.route-state button { padding: 8px 12px; border: 0; border-radius: 7px; color: #fff; background: #7658e8; cursor: pointer; font-size: 11px; }
 
 .login-page { display: grid; min-height: 100vh; grid-template-columns: minmax(320px, .92fr) 1.08fr; background: #fff; }
 .login-story { position: relative; display: flex; min-height: 100vh; flex-direction: column; overflow: hidden; padding: 38px clamp(28px, 6vw, 88px); color: #fff; background: linear-gradient(145deg, #33265f 0%, #514080 48%, #8066bb 100%); }

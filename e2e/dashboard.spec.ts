@@ -15,6 +15,7 @@ test.describe('authenticated dashboard', () => {
   let userId = ''
   let sharedOwnerId = ''
   let viewerOwnerId = ''
+  let emptyOwnerId = ''
   let sessionToken = ''
   let taskTitle = ''
   let sharedTaskTitle = ''
@@ -74,6 +75,22 @@ test.describe('authenticated dashboard', () => {
         role: 'VIEWER',
       },
     })
+    const emptyOwnerSuffix = randomUUID()
+    const emptyOwner = await prisma.user.create({
+      data: {
+        email: `playwright-empty-owner-${emptyOwnerSuffix}@todo.dev`,
+        googleId: `playwright-empty-owner-${emptyOwnerSuffix}`,
+      },
+    })
+    emptyOwnerId = emptyOwner.id
+    await prisma.boardShare.create({
+      data: {
+        ownerId: emptyOwnerId,
+        recipientId: userId,
+        status: 'ACCEPTED',
+        role: 'VIEWER',
+      },
+    })
     sessionToken = jwt.sign(
       { userId: user.id, email: user.email },
       jwtSecret,
@@ -94,6 +111,10 @@ test.describe('authenticated dashboard', () => {
       if (viewerOwnerId) {
         await prisma.todo.deleteMany({ where: { userId: viewerOwnerId } })
         await prisma.user.delete({ where: { id: viewerOwnerId } })
+      }
+      if (emptyOwnerId) {
+        await prisma.todo.deleteMany({ where: { userId: emptyOwnerId } })
+        await prisma.user.delete({ where: { id: emptyOwnerId } })
       }
       await prisma.$disconnect()
     }
@@ -117,6 +138,12 @@ test.describe('authenticated dashboard', () => {
     ])
   })
 
+  test('tasks route requires an authenticated session', async ({ page }) => {
+    await page.context().clearCookies()
+    await page.goto('/tasks')
+    await expect(page).toHaveURL(/\/login/)
+  })
+
   test('dashboard remains keyboard-accessible without overflow across viewports', async ({
     page,
   }) => {
@@ -124,12 +151,14 @@ test.describe('authenticated dashboard', () => {
 
     await page.keyboard.press('Tab')
     await expect(page.getByRole('link', { name: 'Skip to tasks' })).toBeFocused()
+    await expect(page.getByRole('link', { name: 'My tasks' })).toBeVisible()
+    await expect(page.getByLabel('Activity period')).toBeVisible()
+    await page.goto('/tasks')
     await expect(page.getByRole('heading', { name: 'Your tasks' })).toBeVisible()
     await expect(page.getByRole('searchbox', { name: 'Search tasks' })).toBeVisible()
     await expect(
       page.getByRole('checkbox', { name: 'Select all tasks on this page' }),
     ).toBeVisible()
-    await expect(page.getByLabel('Activity period')).toBeVisible()
 
     for (const viewport of [
       { width: 1280, height: 900 },
@@ -144,10 +173,10 @@ test.describe('authenticated dashboard', () => {
   })
 
   test('search and reporting period are persisted in the URL', async ({ page }) => {
-    await page.goto('/')
+    await page.goto('/tasks')
     const search = page.getByRole('searchbox', { name: 'Search tasks' })
     await search.fill(taskTitle)
-    await page.getByRole('button', { name: 'Search' }).click()
+    await page.getByRole('button', { name: 'Search', exact: true }).click()
     await expect(page).toHaveURL(new RegExp(`search=${taskTitle}`))
     await expect(page.locator('.task-row').filter({ hasText: taskTitle })).toBeVisible()
 
@@ -156,6 +185,7 @@ test.describe('authenticated dashboard', () => {
       .poll(() => new URL(page.url()).searchParams.get('search'))
       .toBeFalsy()
 
+    await page.goto('/')
     await page.getByLabel('Activity period').selectOption('30d')
     await expect.poll(() => new URL(page.url()).searchParams.get('period')).toBe('30d')
     await expect(
@@ -164,22 +194,130 @@ test.describe('authenticated dashboard', () => {
     await expect(page.locator('.chart[data-period="30d"] .chart-column')).toHaveCount(30)
   })
 
+  test('task navigation preserves the board and keeps rows off the dashboard', async ({
+    page,
+  }) => {
+    await page.goto(`/?board=${sharedOwnerId}`)
+    await page.getByRole('link', { name: 'My tasks', exact: true }).click()
+    await expect(page).toHaveURL(new RegExp(`/tasks\\?.*board=${sharedOwnerId}`))
+    const sharedRow = page.locator('.task-row').filter({ hasText: sharedTaskTitle })
+    await expect(sharedRow).toBeVisible()
+    await sharedRow.getByRole('checkbox', { name: `Select task: ${sharedTaskTitle}` }).check()
+    await expect(page.getByRole('button', { name: 'Mark complete', exact: true })).toBeVisible()
+    await page.getByLabel('Choose a board').selectOption({ label: 'My board' })
+    await expect.poll(() => new URL(page.url()).searchParams.get('board')).toBeNull()
+    await expect(page.getByRole('heading', { name: 'Your task manager' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Mark complete', exact: true })).toHaveCount(0)
+    await page.getByLabel('Choose a board').selectOption(sharedOwnerId)
+    await expect(page).toHaveURL(new RegExp(`/tasks\\?.*board=${sharedOwnerId}`))
+    await expect(sharedRow).toBeVisible()
+
+    await page.getByRole('link', { name: 'Overview', exact: true }).click()
+    await expect(page).toHaveURL(new RegExp(`/\\?.*board=${sharedOwnerId}`))
+    await expect(page.locator('.task-row')).toHaveCount(0)
+    await expect(page.getByRole('link', { name: 'Open task manager' })).toBeVisible()
+  })
+
+  test('task filters and pagination remain URL-backed', async ({ page }) => {
+    if (!prisma || !userId) {
+      return
+    }
+
+    const prefix = `pagination-e2e-${randomUUID()}`
+    await prisma.todo.createMany({
+      data: Array.from({ length: 21 }, (_, index) => ({
+        title: `${prefix}-${index}`,
+        userId,
+      })),
+    })
+
+    await page.goto(`/tasks?status=open&search=${prefix}`)
+    await expect(
+      page.getByRole('button', { name: /In progress/ }),
+    ).toHaveAttribute('aria-pressed', 'true')
+    await expect(page.getByText('Page 1 of 2')).toBeVisible()
+    await page.getByRole('button', { name: 'Next' }).click()
+    await expect(page).toHaveURL(/page=2/)
+    await expect(page.getByText('Page 2 of 2')).toBeVisible()
+    await expect(page.locator('.task-row')).toHaveCount(1)
+  })
+
+  test('empty boards and filtered no-result states are distinct', async ({ page }) => {
+    await page.goto('/tasks?search=definitely-not-a-task')
+    await expect(page.getByText('No tasks match this view.')).toBeVisible()
+
+    await page.goto(`/tasks?board=${emptyOwnerId}`)
+    await expect(page.getByText('This board has no tasks yet.')).toBeVisible()
+    await expect(page.getByPlaceholder('Add a task')).toHaveCount(0)
+  })
+
+  test('task loader can be retried after a transient navigation failure', async ({ page }) => {
+    let retryAttempt = 0
+    await page.route('**/tasks*', async (route) => {
+      retryAttempt += 1
+      if (retryAttempt === 1) {
+        await route.continue()
+        return
+      }
+
+      const successUrl = new URL(route.request().url())
+      successUrl.searchParams.delete('board')
+      const response = await route.fetch({ url: successUrl.toString() })
+      await route.fulfill({
+        body: await response.body(),
+        headers: response.headers(),
+        status: response.status(),
+      })
+    })
+    await page.goto('/tasks?board=not-a-real-board')
+    await expect(page.getByRole('heading', { name: 'Tasks are unavailable' })).toBeVisible()
+    await page.evaluate(() => window.history.replaceState({}, '', '/tasks'))
+    await page.getByRole('button', { name: 'Retry' }).click()
+    await expect(page.getByRole('heading', { name: 'Your tasks' })).toBeVisible()
+  })
+
+  test('mutation failures are shown without a success-shaped update', async ({ page }) => {
+    await page.goto('/tasks')
+    const row = page.locator('.task-row').filter({ hasText: taskTitle })
+    await expect(row.getByRole('checkbox', { name: `Select task: ${taskTitle}` })).toBeEnabled()
+    await page.route('**/*', (route) => {
+      if (route.request().method() !== 'GET') {
+        return route.abort()
+      }
+      return route.continue()
+    })
+    const toggleButton = row.getByRole('button', { name: `Mark complete: ${taskTitle}` })
+    await toggleButton.click()
+    await expect(page.getByRole('alert')).toHaveText('Could not update your task. Please try again.')
+    await expect(row.getByText('In progress')).toBeVisible()
+    await page.unroute('**/*')
+  })
+
   test.describe('before hydration', () => {
     test.use({ javaScriptEnabled: false })
 
-    test('selection controls are disabled', async ({ page }) => {
-      await page.goto('/')
+    test('interactive task controls are disabled', async ({ page }) => {
+      assert.ok(prisma)
+      const prefix = `unhydrated-pagination-${randomUUID()}`
+      await prisma.todo.createMany({
+        data: Array.from({ length: 21 }, (_, index) => ({
+          title: `${prefix}-${index}`,
+          userId,
+        })),
+      })
+      await page.goto(`/tasks?search=${prefix}`)
       await expect(
         page.getByRole('checkbox', { name: 'Select all tasks on this page' }),
       ).toBeDisabled()
-      await expect(
-        page.getByRole('checkbox', { name: `Select task: ${taskTitle}` }),
-      ).toBeDisabled()
+      await expect(page.getByRole('checkbox', { name: `Select task: ${prefix}`, exact: false }).first()).toBeDisabled()
+      await expect(page.getByRole('button', { name: /In progress/ })).toBeDisabled()
+      await expect(page.getByText('Page 1 of 2')).toBeVisible()
+      await expect(page.getByRole('button', { name: 'Next' })).toBeDisabled()
     })
   })
 
   test('selected tasks can be completed and deleted in bulk', async ({ page }) => {
-    await page.goto('/')
+    await page.goto('/tasks')
     const row = page.locator('.task-row').filter({ hasText: taskTitle })
     await row.getByRole('checkbox', { name: `Select task: ${taskTitle}` }).check()
     await page.getByRole('button', { name: 'Mark complete', exact: true }).click()
@@ -194,7 +332,7 @@ test.describe('authenticated dashboard', () => {
   test('editors can create, edit, complete, and delete shared-board tasks', async ({
     page,
   }) => {
-    await page.goto(`/?board=${sharedOwnerId}`)
+    await page.goto(`/tasks?board=${sharedOwnerId}`)
 
     await expect(
       page.getByText('You can create, edit, complete, and delete tasks on this board.'),
@@ -225,7 +363,7 @@ test.describe('authenticated dashboard', () => {
   })
 
   test('viewers see shared tasks without mutation controls', async ({ page }) => {
-    await page.goto(`/?board=${viewerOwnerId}`)
+    await page.goto(`/tasks?board=${viewerOwnerId}`)
 
     await expect(
       page.getByText('These tasks are visible to you but cannot be changed.'),
