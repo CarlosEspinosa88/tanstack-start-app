@@ -60,6 +60,10 @@ export function TaskManager({
   }, [query.search])
 
   useEffect(() => {
+    setSelectedTodoIds(new Set())
+  }, [query.board, query.page, query.period, query.search, query.status])
+
+  useEffect(() => {
     setIsHydrated(true)
   }, [])
 
@@ -252,7 +256,12 @@ export function TaskManager({
   }
 
   return (
-    <section className="panel tasks-panel" aria-label="Task management">
+    <section
+      className="panel tasks-panel"
+      id="tasks"
+      tabIndex={-1}
+      aria-label="Task management"
+    >
       <div className="tasks-heading">
         <div>
           <h2>{query.board ? 'Shared tasks' : 'Your tasks'}</h2>
@@ -420,8 +429,10 @@ export function TaskManager({
         ))}
         {todos.length === 0 && (
           <li className="empty-state">
-            {pagination.total === 0 && query.status === 'all' && !query.search
-              ? 'No tasks yet. Add your first task above.'
+            {summary.allCount === 0
+              ? canEditBoard
+                ? 'No tasks yet. Add your first task above.'
+                : 'This board has no tasks yet.'
               : 'No tasks match this view.'}
           </li>
         )}

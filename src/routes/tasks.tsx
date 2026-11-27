@@ -2,6 +2,7 @@ import {
   createFileRoute,
   Link,
   useNavigate,
+  useRouter,
 } from '@tanstack/react-router'
 import { TaskManager } from '../components/TaskManager'
 import {
@@ -142,11 +143,18 @@ function TasksPending() {
 }
 
 function TasksError({ reset }: { reset: () => void }) {
+  const router = useRouter()
+
+  async function handleRetry() {
+    await router.invalidate()
+    reset()
+  }
+
   return (
     <main className="route-state">
       <h1>Tasks are unavailable</h1>
       <p>We could not load this task view. Please try again.</p>
-      <button onClick={reset} type="button">Retry</button>
+      <button onClick={() => void handleRetry()} type="button">Retry</button>
     </main>
   )
 }
