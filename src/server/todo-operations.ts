@@ -1,4 +1,5 @@
 import { buildTodoActivity, getUtcActivityRange } from './dashboard'
+import { monthRange } from '../lib/calendar'
 
 export type TodoRecord = {
   id: string
@@ -13,6 +14,7 @@ export type TodoWhere = {
   userId: string
   done?: boolean
   title?: { contains: string }
+  dueDate?: Date
 }
 
 export type TodoListOptions = {
@@ -20,6 +22,8 @@ export type TodoListOptions = {
   status: 'all' | 'open' | 'completed'
   search: string
   period?: '7d' | '30d'
+  dueDate?: string
+  month?: string
 }
 
 export type TodoRepository = {
@@ -39,6 +43,11 @@ export type TodoRepository = {
     startDate: Date
     exclusiveEndDate: Date
   }): Promise<Date[]>
+  findDueDateCounts(args: {
+    userId: string
+    start: Date
+    end: Date
+  }): Promise<{ date: string; count: number }[]>
   create(args: {
     title: string
     dueDate?: Date
@@ -84,10 +93,13 @@ export async function getTodoDashboardData(
     ...(options.status === 'open' ? { done: false } : {}),
     ...(options.status === 'completed' ? { done: true } : {}),
     ...(options.search ? { title: { contains: options.search } } : {}),
+    ...(options.dueDate ? { dueDate: new Date(`${options.dueDate}T00:00:00.000Z`) } : {}),
   }
+  const month = options.month ?? options.dueDate?.slice(0, 7) ?? now.toISOString().slice(0, 7)
+  const { start, end } = monthRange(month)
   const activityDayCount = options.period === '30d' ? 30 : 7
   const activityRange = getUtcActivityRange(now, activityDayCount)
-  const [total, summary, activityDates] =
+  const [total, summary, activityDates, dueDateCounts] =
     await Promise.all([
       repository.count(where),
       repository.findSummary(userId),
@@ -96,6 +108,7 @@ export async function getTodoDashboardData(
         startDate: activityRange.startDate,
         exclusiveEndDate: activityRange.exclusiveEndDate,
       }),
+      repository.findDueDateCounts({ userId, start, end }),
     ])
   const pageCount = Math.max(1, Math.ceil(total / pageSize))
   const page = Math.min(options.page, pageCount)
@@ -109,6 +122,7 @@ export async function getTodoDashboardData(
     todos,
     summary,
     activity: buildTodoActivity(activityDates, now, activityDayCount),
+    calendar: { month, dueDateCounts },
     pagination: { page, pageSize, total, pageCount },
   }
 }

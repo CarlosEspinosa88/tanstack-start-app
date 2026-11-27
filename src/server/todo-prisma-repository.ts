@@ -60,6 +60,16 @@ export function createTodoRepository(prisma: PrismaClient): TodoRepository {
 
       return todos.map((todo) => todo.createdAt)
     },
+    findDueDateCounts: async ({ userId, start, end }) => {
+      const groups = await prisma.todo.groupBy({
+        by: ['dueDate'],
+        where: { userId, dueDate: { gte: start, lt: end } },
+        _count: { _all: true },
+      })
+      return groups.flatMap((group) => group.dueDate
+        ? [{ date: group.dueDate.toISOString().slice(0, 10), count: group._count._all }]
+        : [])
+    },
     create: ({ title, actorId, boardOwnerId, dueDate }) => {
       const data = { title, userId: boardOwnerId, dueDate }
 

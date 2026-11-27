@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { calendarDateSchema, calendarMonthSchema } from '../lib/calendar'
 
 export const CreateTodoInput = z.object({
   title: z.string().trim().min(1).max(140),
@@ -31,6 +32,8 @@ export const TodoListInput = z.object({
   search: z.string().trim().max(140).default(''),
   period: z.enum(['7d', '30d']).default('7d'),
   boardOwnerId: z.string().min(1).optional(),
+  dueDate: calendarDateSchema.optional(),
+  month: calendarMonthSchema.optional(),
 })
 
 const TodoIds = z.array(z.string().min(1)).min(1).max(20).refine(

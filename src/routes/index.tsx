@@ -5,6 +5,7 @@ import {
   type FormEvent,
 } from 'react'
 import { TaskManager } from '../components/TaskManager'
+import { SidebarCalendar } from '../components/SidebarCalendar'
 import {
   inviteToBoardAction,
   respondToBoardInvitationAction,
@@ -128,6 +129,15 @@ function Home() {
             <button type="submit">Sign out</button>
           </form>
         </nav>
+        <SidebarCalendar
+          {...dashboard.calendar}
+          selectedDate={query.dueDate}
+          onMonthChange={(month) => void navigate({ search: (previous) => ({ ...previous, month }) })}
+          onSelectDate={(dueDate) => void navigate({
+            to: '/tasks',
+            search: { ...query, month: dashboard.calendar.month, dueDate, page: 1 },
+          })}
+        />
         <div className="sidebar-bottom">
           {user.picture ? (
             <img className="avatar" src={user.picture} alt="" />

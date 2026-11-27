@@ -61,7 +61,7 @@ export function TaskManager({
 
   useEffect(() => {
     setSelectedTodoIds(new Set())
-  }, [query.board, query.page, query.period, query.search, query.status])
+  }, [query.board, query.page, query.period, query.search, query.status, query.dueDate])
 
   useEffect(() => {
     setIsHydrated(true)
@@ -133,6 +133,7 @@ export function TaskManager({
           ...(query.board ? { boardOwnerId: query.board } : {}),
         },
       })
+      setSelectedTodoIds(new Set())
       await router.invalidate()
     } catch {
       setMutationError('Could not update your task. Please try again.')
@@ -165,6 +166,7 @@ export function TaskManager({
         },
       })
       setEditingId(null)
+      setSelectedTodoIds(new Set())
       await router.invalidate()
     } catch {
       setMutationError('Could not update your task. Please try again.')
