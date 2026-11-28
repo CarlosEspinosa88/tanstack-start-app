@@ -23,7 +23,7 @@ const config: runtime.GetPrismaClientConfig = {
       "value": "prisma-client"
     },
     "output": {
-      "value": "/home/runner/work/tanstack-start-app/tanstack-start-app/generated",
+      "value": "/Users/carlinhos/Desarrollo/copilot-worktrees/tanstack-start-app/carlosespinosa88-special-disco/generated",
       "fromEnvVar": null
     },
     "config": {
@@ -32,12 +32,12 @@ const config: runtime.GetPrismaClientConfig = {
     "binaryTargets": [
       {
         "fromEnvVar": null,
-        "value": "debian-openssl-3.0.x",
+        "value": "darwin-arm64",
         "native": true
       }
     ],
     "previewFeatures": [],
-    "sourceFilePath": "/home/runner/work/tanstack-start-app/tanstack-start-app/prisma/schema.prisma",
+    "sourceFilePath": "/Users/carlinhos/Desarrollo/copilot-worktrees/tanstack-start-app/carlosespinosa88-special-disco/prisma/schema.prisma",
     "isCustomOutput": true
   },
   "relativePath": "../prisma",
@@ -48,7 +48,6 @@ const config: runtime.GetPrismaClientConfig = {
   ],
   "activeProvider": "postgresql",
   "postinstall": false,
-  "ciName": "GitHub Actions",
   "inlineDatasources": {
     "db": {
       "url": {
