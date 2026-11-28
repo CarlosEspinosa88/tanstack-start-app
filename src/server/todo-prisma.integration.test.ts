@@ -259,11 +259,48 @@ test(
         data: { status: 'REVOKED' },
       })
       await assert.rejects(
+        createBoardTodo(
+          repository,
+          editor.id,
+          firstUser.id,
+          'Revoked collaborator create',
+        ),
+        { message: 'Board not found' },
+      )
+      await assert.rejects(
         updateBoardTodo(repository, editor.id, firstUser.id, {
           id: revokedTodo.id,
           done: true,
         }),
         { message: 'Todo not found' },
+      )
+      await assert.rejects(
+        deleteBoardTodo(repository, editor.id, firstUser.id, revokedTodo.id),
+        { message: 'Todo not found' },
+      )
+      assert.equal(
+        await updateBoardTodos(
+          repository,
+          editor.id,
+          firstUser.id,
+          [revokedTodo.id],
+          true,
+        ),
+        0,
+      )
+      assert.equal(
+        await deleteBoardTodos(
+          repository,
+          editor.id,
+          firstUser.id,
+          [revokedTodo.id],
+        ),
+        0,
+      )
+      assert.equal(
+        (await prisma.todo.findUniqueOrThrow({ where: { id: revokedTodo.id } }))
+          .done,
+        false,
       )
 
       const bulkTodo = await createBoardTodo(
