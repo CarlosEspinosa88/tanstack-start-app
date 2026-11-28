@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate, useRouter, Link } from '@tanstack/react-router'
 import {
+  useEffect,
   useState,
   type CSSProperties,
   type FormEvent,
@@ -43,6 +44,10 @@ function Home() {
   const [sharingError, setSharingError] = useState('')
   const [sharingMessage, setSharingMessage] = useState('')
   const [sharingBusy, setSharingBusy] = useState(false)
+  const [isHydrated, setIsHydrated] = useState(false)
+  useEffect(() => {
+    setIsHydrated(true)
+  }, [])
   const completionRate = summary.allCount
     ? Math.round((summary.completedCount / summary.allCount) * 100)
     : 0
@@ -202,6 +207,7 @@ function Home() {
               <span className="visually-hidden">Activity period</span>
               <select
                 aria-label="Activity period"
+                disabled={!isHydrated}
                 value={query.period}
                 onChange={(event) => {
                   const period: ActivityPeriod = event.currentTarget.value === '30d' ? '30d' : '7d'
