@@ -192,6 +192,11 @@ test.describe('authenticated dashboard', () => {
       page.getByRole('img', { name: 'Daily tasks created over the last 30 days' }),
     ).toBeVisible()
     await expect(page.locator('.chart[data-period="30d"] .chart-column')).toHaveCount(30)
+    await page.reload()
+    await expect(page.getByLabel('Activity period')).toHaveValue('30d')
+    await page.getByLabel('Activity period').selectOption('7d')
+    await expect.poll(() => new URL(page.url()).searchParams.get('period')).toBe('7d')
+    await expect(page.locator('.chart[data-period="7d"] .chart-column')).toHaveCount(7)
   })
 
   test('task navigation preserves the board and keeps rows off the dashboard', async ({
@@ -368,6 +373,11 @@ test.describe('authenticated dashboard', () => {
 
   test.describe('before hydration', () => {
     test.use({ javaScriptEnabled: false })
+
+    test('activity period is disabled', async ({ page }) => {
+      await page.goto('/')
+      await expect(page.getByLabel('Activity period')).toBeDisabled()
+    })
 
     test('interactive task controls are disabled', async ({ page }) => {
       assert.ok(prisma)
